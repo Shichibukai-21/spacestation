@@ -78,6 +78,11 @@ body{position:relative;background:radial-gradient(var(--dot-off) 1px,transparent
 .brand .hello b{color:var(--fg);font-weight:500}
 .brand .name{font-family:var(--dots);font-weight:800;font-size:clamp(28px,6cqw,46px);letter-spacing:.14em;display:inline-flex;align-items:center;gap:12px;white-space:nowrap}
 .brand .name::before{content:"";flex:none;width:10px;height:10px;border-radius:50%;background:var(--signal);box-shadow:0 0 12px var(--signal)}
+.more{all:unset;display:none;cursor:pointer;width:50px;aspect-ratio:1;border-radius:50%;flex:none;place-items:center;margin-right:8px;
+  background:var(--card);border:1px solid var(--line);color:var(--fg);font-size:22px;line-height:1;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-sizing:border-box}
+.more:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+@media (hover:none) and (pointer:coarse){.more{display:grid}}
+@media (hover:none) and (pointer:coarse) and (max-width:899px){.b-brand{padding-right:116px}.brand .name{font-size:clamp(20px,6cqw,46px);gap:8px}}
 .themer{all:unset;cursor:pointer;width:50px;aspect-ratio:1;border-radius:50%;display:block;flex:none}
 .themer:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
 .themer svg{width:100%;height:100%;display:block;overflow:visible;transition:transform .8s cubic-bezier(.65,0,.25,1)}
@@ -328,6 +333,7 @@ body{position:relative;background:radial-gradient(var(--dot-off) 1px,transparent
 
 <div class="board" id="board">
   <section class="blk b-theme" data-b="theme">
+      <button class="more" id="more" aria-label="Menu" aria-haspopup="menu">⋯</button>
       <button class="themer" id="themer" aria-label="Switch theme">
         <svg viewBox="0 0 64 64" aria-hidden="true">
           <defs><clipPath id="tgclip"><circle cx="32" cy="31" r="12"/></clipPath></defs>
@@ -607,7 +613,7 @@ function siteCard(it,mod,showCat,mi,si){
     ${showCat?`<span class="tag">${esc(mod.name)}</span>`:''}<b>${esc(it.name)}</b><small>${esc(host(it.url))}</small></a>`;
 }
 function home(){
-  if(!modules.length){$view.innerHTML=`<div class="empty">${glyph('star')}<div>No modules yet. Import your backup file, or right-click here to add one.</div><button class="btn primary" data-import>Import backup</button></div>`;return}
+  if(!modules.length){$view.innerHTML=`<div class="empty">${glyph('star')}<div>No modules yet. Import your backup file, or ${matchMedia('(hover:none) and (pointer:coarse)').matches?'tap ⋯':'right-click here'} to add one.</div><button class="btn primary" data-import>Import backup</button></div>`;return}
   $view.innerHTML=`<div class="modules enter">${modules.map((c,i)=>`
     <button class="module" data-go="${esc(c.id)}" data-m="${i}" aria-label="Open ${esc(c.name)}"><span class="m-count">${pad(c.items.length)}</span>${glyph(c.glyph)}
       <span class="m-name">${esc(c.name)}</span><span class="m-desc">${esc(c.desc)}</span></button>`).join('')}</div>${canWrite?'<p class="hint">Right-click to edit · arrange layout</p>':''}`;
@@ -688,7 +694,7 @@ document.addEventListener('pointerdown',e=>{if(!$('menu').hidden&&!e.target.clos
 addEventListener('scroll',closeMenu,{passive:true,capture:true});addEventListener('resize',closeMenu);
 const moveItem=(arr,i,d)=>{const j=i+d;if(j<0||j>=arr.length)return arr;const a=[...arr];[a[i],a[j]]=[a[j],a[i]];return a};
 const arrangeItem=()=>['-',...(desktop()?[{label:'Arrange layout',icon:'grid',run:()=>setArrange(true)}]:[]),
-  {label:'Your name…',icon:'edit',run:askName},{label:'Export backup',icon:'down',run:exportBackup},{label:'Import backup…',icon:'up',run:importBackup}];
+  {label:'Your name…',icon:'edit',run:askName},{label:'Weather city…',icon:'edit',run:askCity},{label:'Export backup',icon:'down',run:exportBackup},{label:'Import backup…',icon:'up',run:importBackup}];
 function menuFor(target,x,y){
   if(arranging)return false;
   const inView=target.closest('.b-view');
@@ -722,6 +728,7 @@ document.addEventListener('contextmenu',e=>{
   if(!e.target.closest('.board'))return;
   if(menuFor(e.target,e.clientX,e.clientY))e.preventDefault();
 });
+$('more').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();menuFor($view,r.right,r.bottom+8)||openMenu(r.right,r.bottom+8,'Station',arrangeItem().slice(1))});
 let lpTimer=null,lpFired=false,lpStart=null;
 document.addEventListener('pointerdown',e=>{
   if(e.pointerType!=='touch'||!e.target.closest('.b-view'))return;
@@ -1383,20 +1390,32 @@ modules=store.get('ss-modules',[]);recent=(store.get('ss-recent',[])||[]).slice(
 route();paintRecent();
 function askName(){const n=prompt('Your first name for the greeting (leave empty for none):',firstName);if(n===null)return;firstName=n.trim().slice(0,30);store.set('ss-name',firstName);paintGreet()}
 function exportBackup(){
-  const b={app:'spacestation',version:1,exportedAt:new Date().toISOString(),name:firstName,modules,recent,ui:UI,fav:FAV};
+  const b={app:'spacestation',version:1,exportedAt:new Date().toISOString(),name:firstName,place:PLACE,modules,recent,ui:UI,fav:FAV};
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(b)],{type:'application/json'}));a.download='spacestation-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 }
 function importBackup(){
   const i=document.createElement('input');i.type='file';i.accept='.json,application/json';
   i.onchange=async()=>{try{const b=JSON.parse(await i.files[0].text());if(b.app!=='spacestation'||!Array.isArray(b.modules))throw 0;
     store.set('ss-modules',b.modules);store.set('ss-recent',Array.isArray(b.recent)?b.recent.slice(0,5):[]);if(b.fav)store.set('ss-fav',b.fav);
-    if(b.ui)store.set('ss-ui4',b.ui);if(typeof b.name==='string')store.set('ss-name',b.name);location.reload()}catch{toast("That file isn't a SpaceStation backup",true)}};
+    if(b.ui)store.set('ss-ui4',b.ui);if(typeof b.name==='string')store.set('ss-name',b.name);
+    if(b.place&&typeof b.place.lat==='number'){store.set('ss-place',b.place);store.set('ss-wx',null)}location.reload()}catch{toast("That file isn't a SpaceStation backup",true)}};
   i.click();
 }
 $view.addEventListener('click',e=>{if(e.target.closest('[data-import]'))importBackup()});
 
 /* ======================= live weather (Open-Meteo, no key needed) ======================= */
-const PLACE={city:'Baghdad',lat:33.3152,lon:44.3661};
+const HOME={city:'Baghdad',lat:33.3152,lon:44.3661};
+let PLACE=store.get('ss-place',null)||HOME;
+async function askCity(){
+  const n=prompt('City for the weather (leave empty for Baghdad):',PLACE.city);if(n===null)return;
+  let p=HOME;
+  if(n.trim()){
+    try{const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?'+new URLSearchParams({name:n.trim(),count:1}));const g=(await r.json()).results?.[0];
+      if(!g){toast(`Couldn't find "${n.trim()}"`,true);return}p={city:g.name,lat:g.latitude,lon:g.longitude}}
+    catch{toast("Couldn't look up that city",true);return}
+  }
+  PLACE=p;store.set('ss-place',p);store.set('ss-wx',null);weather=forecast=null;toast('Weather: '+p.city);fetchWeather();
+}
 const wmo=c=>c<=1?'clear':c===2?'partly':c===3?'cloudy':c<=48?'fog':c<=67||(c>=80&&c<=82)?'rain':c<=77||c===85||c===86?'snow':c>=95?'storm':'cloudy';
 const hhmm=s=>s?s.slice(11,16):'';
 async function fetchWeather(){
