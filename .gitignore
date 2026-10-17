@@ -1,0 +1,5 @@
+# Publish only the page. Everything else here (your backup with your sites, exports, work files) stays on this computer.
+*
+!index.html
+!README.md
+!.gitignore
