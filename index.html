@@ -306,11 +306,15 @@ body{position:relative;background:radial-gradient(var(--dot-off) 1px,transparent
 
 /* ---------- glass: cards are frosted panes over the starfield grid ---------- */
 .card,.module,.site,.rec,.rec-empty,.search input,.tg-glass{
-  background:linear-gradient(160deg,color-mix(in srgb,var(--card-hi) 62%,transparent),color-mix(in srgb,var(--card) 34%,transparent));
-  -webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);
-  border-color:color-mix(in srgb,var(--fg) 11%,transparent);
-  box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 9%,transparent),inset 0 -1px 0 color-mix(in srgb,#000 12%,transparent),0 14px 34px -22px rgba(0,0,0,.55)}
-.module:hover,.site:hover,.site.first,.rec:hover{background:linear-gradient(160deg,color-mix(in srgb,var(--card-hi) 82%,transparent),color-mix(in srgb,var(--card) 55%,transparent))}
+  /* a light sheen across the top-left, a thin tint of the card colour, and a strong blur of what's behind */
+  background:linear-gradient(135deg,color-mix(in srgb,#fff 11%,transparent) 0%,color-mix(in srgb,#fff 3%,transparent) 38%,transparent 62%),
+    linear-gradient(160deg,color-mix(in srgb,var(--card-hi) 38%,transparent),color-mix(in srgb,var(--card) 18%,transparent));
+  -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+  border-color:color-mix(in srgb,var(--fg) 15%,transparent);
+  box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 20%,transparent),inset 1px 0 0 color-mix(in srgb,#fff 7%,transparent),
+    inset 0 -1px 0 color-mix(in srgb,#000 14%,transparent),0 18px 40px -24px rgba(0,0,0,.6)}
+.module:hover,.site:hover,.site.first,.rec:hover{background:linear-gradient(135deg,color-mix(in srgb,#fff 15%,transparent) 0%,color-mix(in srgb,#fff 5%,transparent) 40%,transparent 64%),
+  linear-gradient(160deg,color-mix(in srgb,var(--card-hi) 58%,transparent),color-mix(in srgb,var(--card) 34%,transparent))}
 .themer{border-radius:50%;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .tg-bg{fill:color-mix(in srgb,var(--card) 55%,transparent)}
 /* recently opened reads right-to-left when it lives on the right side of the board */
@@ -1168,10 +1172,10 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
   const at = (dt, fn) => later.push([tick + dt, fn]);
   let gen = 0; // bumped by every spin: card-game and reaction tasks queued before it are dropped
   const atR = (dt, fn) => { const g = gen; at(dt, () => g === gen && fn()); };
-  const flyers = [], puffs = [], drops = [], pieces = [];
+  const flyers = [], puffs = [], drops = [];
   const pot = { cards: [], chips: 0 };
   const gun = { ang: Math.random() * Math.PI * 2, spin: null, recoil: 0 };
-  let queued = false, shake = 0, bang = null, state = 'idle', actors = [], labels = [];
+  let winAt = 0, queued = false, shake = 0, bang = null, state = 'idle', actors = [], labels = [];
 
   function Actor(name, rig, img, seat) {
     const view = seat.far ? rig.front : rig.back, lookRight = seat.dir > 0;
@@ -1215,7 +1219,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
     if (a.dead) { // one sharp jolt from the hit, then the death pose; the hat flies off and drops
       const t = tick - a.dead.t0, k = Math.min(1, Math.max(0, t - 1) / 4), far = a.seat.far, kind = a.dead.kind;
       if (t < 1) { bx -= a.inward * 2; by -= 1; }
-      else if (kind === 'slump' || kind === 'split') { by += Math.round((far ? 11 : 5) * k); bx += Math.round((far ? 2 : 4) * k) * a.inward; } // face-plant on the table
+      else if (kind === 'slump') { by += Math.round((far ? 11 : 5) * k); bx += Math.round((far ? 2 : 4) * k) * a.inward; } // face-plant on the table
       else if (kind === 'back') { rot = -a.inward * (far ? 1.1 : .8) * k; by += Math.round((far ? 10 : 12) * k); bx -= Math.round(5 * k) * a.inward; } // thrown back off the chair
       else if (kind === 'side') { rot = a.dead.side * 1.3 * k; by += Math.round(7 * k); bx += Math.round(4 * k) * a.dead.side; } // spun round, topples out of the seat
       rot = Math.round(rot / (Math.PI / 12)) * (Math.PI / 12); // 15-degree steps keep it pixel-crisp
@@ -1258,15 +1262,8 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
       }
       const l = Math.round(a.w * .25), r = Math.round(a.w * .75); // lap
       rect(ctx, l - 1, h - 2 + Math.min(o.by, 1), r - l + 2, 8, INK); rect(ctx, l, h - 2 + Math.min(o.by, 1), r - l, 6, pants);
-      if (a.dead && a.dead.kind === 'split') { // the head is gone (flying in pieces): body through a buffer with everything above the neck cut
-        const buf = a.buf ??= Object.assign(document.createElement('canvas'), { width: a.w, height: a.h }), bg = buf.getContext('2d');
-        bg.clearRect(0, 0, a.w, a.h); bg.drawImage(img, 0, v.cells.body, a.w, a.h, 0, 0, a.w, a.h); bg.clearRect(0, 0, a.w, v.neck - 1);
-        ctx.drawImage(buf, o.bx, o.by);
-        rect(ctx, v.head[0] - 4 + o.bx, v.neck - 2 + o.by, 9, 2, WINE); dot(ctx, v.head[0] + o.bx, v.neck - 3 + o.by, RUST); // neck stump
-      } else {
-        cell(v.cells.body, o.bx, o.by);
-        cell(v.cells['face_' + a.expr] ?? v.cells.face_neutral, o.bx + o.hx, o.by + o.hy);
-      }
+      cell(v.cells.body, o.bx, o.by);
+      cell(v.cells['face_' + a.expr] ?? v.cells.face_neutral, o.bx + o.hx, o.by + o.hy);
       cell(v.cells.over, o.bx, o.by);
       cell(v.cells.hat, o.bx + o.hx + o.hatX, o.by + o.hy - o.hat);
       if (a.name === 'walrus' && a.alive) { // cigar in the corner of the mouth
@@ -1278,7 +1275,6 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
       bg.clearRect(0, 0, a.w, a.h);
       bg.drawImage(img, 0, v.y, a.w, a.h, o.bx, o.by, a.w, a.h);
       for (let x = 0; x < a.w; x++) { const y = Math.ceil(ry + (x - rx) / 2); if (y < a.h) bg.clearRect(x, y, 1, a.h - y); }
-      if (a.dead && a.dead.kind === 'split') { const cut = Math.round(a.h * .33) + o.by; bg.clearRect(0, 0, a.w, cut); rect(bg, v.head[0] - 5 + o.bx, cut, 11, 2, WINE); }
       ctx.drawImage(buf, 0, 0);
     }
     ctx.restore();
@@ -1327,7 +1323,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
   function react(a, kind) {
     if (!a.alive) return;
     const p = PERS[a.name];
-    if (kind === 'win') { face(a, p.win[0], 30); say(a, p.win[1], 24); fx(a, 'bounce', 24); if (a.seat.far) fx(a, 'hop', 4); }
+    if (kind === 'win') { face(a, p.win[0], 24); say(a, p.win[1] === '$' ? 'note' : p.win[1], 18); fx(a, 'bounce', 12); } // took a hand
     if (kind === 'lose') {
       face(a, p.lose[0], 30); say(a, p.lose[1], 22);
       if (a.name === 'buffalo') { fx(a, 'pound', 6); shake = Math.max(shake, 6); at(4, () => snort(a)); at(10, () => snort(a)); }
@@ -1380,7 +1376,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
   // ---------- the game: spin, BANG, last one standing ----------
   const announce = t => { if (live) live.textContent = t; };
   function spin() {
-    if (state === 'win') { reset(); return; } // a click on the winner screen starts a new game right away
+    if (state === 'win') { if (tick - winAt > 36) reset(); return; } // the winner gets 3 s before a click can start a new game
     if (state !== 'idle') { queued = true; return; } // clicked mid-spin or mid-shot: spin again as soon as it's free
     queued = false;
     const ps = alive(); if (ps.length < 2) return;
@@ -1391,30 +1387,6 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
     gun.spin = { t0: performance.now(), dur: 620 + Math.random() * 200, from: gun.ang, to: goal + turns * Math.PI * 2, victim };
     ps.forEach(a => { a.bubble = null; a.fx = []; face(a, 'neutral', 1); });
     announce('The revolver spins…');
-  }
-  // The victim's head, split down the middle into two pieces that fly apart (scene coords, already mirrored).
-  function splitHead(a, away) {
-    const v = a.view, c = document.createElement('canvas'); c.width = a.w; c.height = a.h;
-    const g = c.getContext('2d');
-    let cut;
-    if (a.seat.far) {
-      cut = v.neck;
-      g.drawImage(a.img, 0, v.cells.body, a.w, cut, 0, 0, a.w, cut);
-      g.drawImage(a.img, 0, v.cells['face_' + a.expr] ?? v.cells.face_neutral, a.w, a.h, 0, 0, a.w, a.h);
-      g.clearRect(0, cut + 2, a.w, a.h);
-    } else { cut = Math.round(a.h * .33); g.drawImage(a.img, 0, v.y, a.w, cut, 0, 0, a.w, cut); }
-    const mid = v.head[0];
-    [[0, mid, -1], [mid, a.w, 1]].forEach(([x0, x1, side]) => {
-      const w = x1 - x0; if (w < 1) return;
-      const pc = document.createElement('canvas'); pc.width = w; pc.height = cut + 2;
-      const pg = pc.getContext('2d');
-      if (a.mirror) { pg.translate(w, 0); pg.scale(-1, 1); }
-      pg.drawImage(c, x0, 0, w, cut + 2, 0, 0, w, cut + 2);
-      for (let y = 0; y < cut; y += 2) dot(pg, side < 0 ? w - 1 : 0, y + (Math.random() * 2 | 0), y % 4 ? WINE : RUST); // raw split edge
-      const sx = a.mirror ? a.x + a.w - x1 : a.x + x0, s = side * (a.mirror ? -1 : 1);
-      pieces.push({ c: pc, x: sx + w / 2, y: a.y + cut / 2, vx: s * (.4 + Math.random() * .6) + (T.cx - (sx + w / 2)) / 26, vy: -2 - Math.random(), // apart, and onto the table
-        rot: 0, vr: s * (.12 + Math.random() * .1), floor: a.seat.base + 6, done: false });
-    });
   }
   function shoot(victim) {
     state = 'bang';
@@ -1430,30 +1402,35 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
         floor: victim.seat.base + 4 + Math.random() * 10, c: rnd([WINE, RUST, RUST, INK]), big: Math.random() < .3 });
     }
     victim.dead.pool = { x: victim.seat.edgeX, y: victim.seat.edgeY, r: 0 };
-    const roll = Math.random(); // face-plant, thrown back, spun round; the head split is the rare one
-    victim.dead.kind = new URLSearchParams(location.search).get('death') || (roll < .14 ? 'split' : roll < .43 ? 'slump' : roll < .72 ? 'back' : 'side'); // ?death= forces one, for checking
+    const roll = Math.random(); // face-plant, thrown back, or spun round out of the seat
+    victim.dead.kind = new URLSearchParams(location.search).get('death') || (roll < .34 ? 'slump' : roll < .67 ? 'back' : 'side'); // ?death= forces one, for checking
     victim.dead.side = Math.random() < .5 ? -1 : 1;
-    if (victim.dead.kind === 'split') splitHead(victim, away);
     labels[victim.seatIndex] && (labels[victim.seatIndex].className = 'rt-name out');
     bang = { t0: performance.now(), at: bangSpot() };
     alive().forEach((a, i) => { face(a, 'shock', 20); say(a, i % 2 ? '!!' : '!', 18); fx(a, 'recoil', 10); busy(a, 30);
-      atR(18 + i * 3, () => react(a, a.name === 'walrus' || a.name === 'buffalo' ? 'win' : 'lose')); });
+      atR(18 + i * 3, () => react(a, 'lose')); });
     announce(`BANG! ${NAMES[victim.name]} is out.`);
     at(2, () => {
       const left = alive();
       if (left.length === 1) {
         const w = left[0]; w.win = true; state = 'win';
         labels[w.seatIndex] && (labels[w.seatIndex].className = 'rt-name win');
-        face(w, PERS[w.name].win[0], 60); say(w, '$', 54); fx(w, 'bounce', 54);
+        winAt = tick; queued = false;
         announce(`${NAMES[w.name]} survives.`);
-        at(60, () => state === 'win' && reset());
+        // victory lap: a belly laugh, then a smirk and a tip of the hat, over and over until the next game
+        const smirk = has(w, 'smug') ? 'smug' : 'blink';
+        for (let k = 0; k < 4; k++) {
+          at(4 + k * 26, () => { if (state !== 'win') return; face(w, 'laugh', 13); say(w, 'HA', 12); fx(w, 'bounce', 12); if (w.name === 'walrus') smokeFrom(w, true); });
+          at(17 + k * 26, () => { if (state !== 'win') return; face(w, smirk, 13); say(w, '$', 12); fx(w, 'hop', 4); at(6, () => state === 'win' && fx(w, 'hop', 4)); });
+        }
+        at(110, () => state === 'win' && reset());
       } else { state = 'idle'; cv.classList.remove('busy'); atR(36, round); if (queued) spin(); }
     });
   }
   function reset() {
     actors.forEach(a => { a.alive = true; a.dead = null; a.win = false; a.expr = 'neutral'; a.fx = []; });
     labels.forEach(l => l.className = 'rt-name');
-    sctx.clearRect(0, 0, W, H); drops.length = 0; pieces.length = 0; pot.cards.length = 0; pot.chips = 0; gen++;
+    sctx.clearRect(0, 0, W, H); drops.length = 0; pot.cards.length = 0; pot.chips = 0; gen++;
     state = 'idle'; cv.classList.remove('busy'); announce(''); queued = false;
     atR(6, round);
   }
@@ -1543,7 +1520,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
       const pl = a.dead && a.dead.pool;
       if (pl && tick - a.dead.t0 > 2 && pl.r < 1) {
         pl.r = Math.min(1, pl.r + .16);
-        const R = 2 + pl.r * 9;
+        const R = 2 + pl.r * 6;
         for (let y = -R; y <= R; y++) for (let x = -R * 1.8; x <= R * 1.8; x++) {
           const px = Math.round(pl.x + x), py = Math.round(pl.y + y * .5), q = (x / (R * 1.8)) ** 2 + (y / R) ** 2;
           if (q <= 1 && onFelt(px, py)) dot(sctx, px, py, q < .55 ? WINE : (px + py) % 2 ? RUST : WINE);
@@ -1566,14 +1543,6 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
       if (t >= 1) { flyers.splice(i, 1); f.land && f.land(); continue; }
       const x = f.from[0] + (f.to[0] - f.from[0]) * t, y = f.from[1] + (f.to[1] - f.from[1]) * t - Math.sin(Math.PI * t) * 10;
       f.kind === 'card' ? drawCard(x - 2, y - 2, false) : drawChip(Math.round(x - 2), Math.round(y - 1), CHIP[i % 3]);
-    }
-    for (const pc of pieces) { // head halves: tumble, then lie where they land
-      if (!pc.done) {
-        pc.x += pc.vx * .5; pc.y += pc.vy * .5; pc.vy += .16; pc.rot += pc.vr * .5;
-        if (pc.vy > 0 && (pc.y >= pc.floor || (pc.y > T.cy - T.ry && onFelt(Math.round(pc.x), Math.round(pc.y))))) pc.done = true;
-      }
-      ctx.save(); ctx.translate(Math.round(pc.x), Math.round(pc.y)); ctx.rotate(Math.round(pc.rot / (Math.PI / 8)) * Math.PI / 8);
-      ctx.drawImage(pc.c, -Math.round(pc.c.width / 2), -Math.round(pc.c.height / 2)); ctx.restore();
     }
     actors.filter(a => !a.seat.far).sort((p, q) => p.y + p.h - q.y - q.h).forEach(drawActor);
     if (gun.recoil > 1.5) { // muzzle flash
