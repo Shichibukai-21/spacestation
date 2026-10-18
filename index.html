@@ -133,12 +133,12 @@ body{position:relative;background:radial-gradient(var(--dot-off) 1px,transparent
 .dw .flake{fill:var(--fg);opacity:.4}
 .dw .bolt{fill:var(--fire);opacity:.6}
 .dw .fogb{fill:var(--muted);opacity:.16}
-.dw-spin{transform-origin:var(--ox) var(--oy);animation:wspin 40s linear infinite}
-.dw-pulse{animation:dwpulse 5s ease-in-out infinite}
-.dw-drift{animation:dwdrift 34s linear infinite}
+.dw-spin{transform-origin:var(--ox) var(--oy);animation:wspin 40s steps(120) infinite}
+.dw-pulse{animation:dwpulse 5s steps(10) infinite}
+.dw-drift{animation:dwdrift 34s steps(166) infinite}
 .dw-drift.s2{animation-duration:52s;animation-delay:-20s}
 .dw-drift.s3{animation-duration:44s;animation-delay:-34s}
-.dw-rain{animation:dwrain .9s linear infinite}
+.dw-rain{animation:dwrain .9s steps(8) infinite}
 .dw-snow{animation:dwrain 3.2s linear infinite}
 @keyframes dwpulse{50%{opacity:.18}}
 @keyframes dwdrift{from{transform:translateX(-62px)}to{transform:translateX(104px)}}
@@ -170,15 +170,15 @@ body{position:relative;background:radial-gradient(var(--dot-off) 1px,transparent
 .wx-meta span{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;display:inline-flex;align-items:center;gap:4px}
 .wx-as{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:-6px}
 .wx-icon .w-ink{fill:var(--fg)} .wx-icon .w-sig{fill:var(--signal)} .wx-icon .w-muted{fill:var(--muted)} .wx-icon .w-fire{fill:var(--fire)}
-.w-spin{transform-box:fill-box;transform-origin:center;animation:wspin 14s linear infinite}
-.w-drift{animation:wdrift 5s ease-in-out infinite alternate}
-.w-drift2{animation:wdrift 7s ease-in-out infinite alternate-reverse}
+.w-spin{transform-box:fill-box;transform-origin:center;animation:wspin 14s steps(56) infinite}
+.w-drift{animation:wdrift 5s steps(5) infinite alternate}
+.w-drift2{animation:wdrift 7s steps(5) infinite alternate-reverse}
 .w-fall{animation:wfall 1.1s steps(4) infinite}
 .w-fall.d2{animation-delay:-.35s}.w-fall.d3{animation-delay:-.7s}
 .w-snow{animation:wfall 2.6s steps(6) infinite}
 .w-flash{animation:wflash 3s steps(1) infinite}
 .w-twinkle{animation:wtw 2.4s steps(2) infinite}
-.w-slide{animation:wdrift 3s ease-in-out infinite alternate}
+.w-slide{animation:wdrift 3s steps(5) infinite alternate}
 @keyframes wspin{to{transform:rotate(360deg)}}
 @keyframes wdrift{from{transform:translateX(-2px)}to{transform:translateX(3px)}}
 @keyframes wfall{from{transform:translateY(-4px);opacity:0}30%{opacity:1}to{transform:translateY(8px);opacity:0}}
@@ -1589,6 +1589,8 @@ function saloonBoot() {
       }
     }
   }
+  // frame budget by what's on screen: the spin and BANG at 60 fps, cards/chips/blood in flight at 30, otherwise the 12 game ticks
+  const frameGap = () => gun.spin || bang ? 1000 / 61 : flyers.length || drops.length || shake || gun.recoil > 0 ? 1000 / 31 : TICK_MS - 1;
   function render(now) {
     update(now);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1651,7 +1653,7 @@ function saloonBoot() {
       at(6, round);
       let last = 0, visible = true;
       if (window.IntersectionObserver) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(cv);
-      const loop = now => { requestAnimationFrame(loop); if (!visible || document.hidden || now - last < 1000 / 61) return; last = now; render(now); }; // up to 60 fps
+      const loop = now => { requestAnimationFrame(loop); if (!visible || document.hidden || now - last < frameGap()) return; last = now; render(now); };
       requestAnimationFrame(loop);
     });
   });
