@@ -1018,17 +1018,17 @@ function saloonBoot() {
     const k = Math.min(r.width / W, r.height / H);
     scale = k;
     cv.style.width = W * scale + 'px'; cv.style.height = H * scale + 'px';
-    fitOverlay(); at0 = null;
+    at0 = null; bangArt = null;
   }
 
-  // BANG! panel lives on its own overlay so it can pop up anywhere in the block, never over the table.
-  const ov = document.createElement('canvas');
-  ov.setAttribute('aria-hidden', 'true');
-  Object.assign(ov.style, { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none' });
+  // BANG! panel: drawn once into its own small canvas, then popped with a compositor animation (smooth at any
+  // frame rate, nothing redrawn per frame). It can appear anywhere in the block, never over the table.
+  const bangEl = document.createElement('canvas');
+  bangEl.setAttribute('aria-hidden', 'true');
+  Object.assign(bangEl.style, { position: 'absolute', left: 0, top: 0, pointerEvents: 'none', opacity: 0 });
   if (getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
-  wrap.appendChild(ov);
-  const octx = ov.getContext('2d');
-  function fitOverlay() { const d = devicePixelRatio || 1; ov.width = Math.round(wrap.clientWidth * d); ov.height = Math.round(wrap.clientHeight * d); }
+  wrap.appendChild(bangEl);
+  let bangArt = null; // the panel scale it was drawn at; cleared on resize
 
   // ---------- isometric chairs: 4 legs, seat slab, tall backrest (base and backrest drawn separately) ----------
   // facing: 'px' = sitter looks screen right-down, 'py' = left-down, 'nx' = up-left, 'ny' = up-right
@@ -1179,7 +1179,7 @@ function saloonBoot() {
   const flyers = [], puffs = [], drops = [];
   const pot = { cards: [], chips: 0 };
   const gun = { ang: Math.random() * Math.PI * 2, spin: null, recoil: 0 };
-  let winAt = 0, shake = 0, bang = null, state = 'idle', actors = [], labels = [];
+  let winAt = 0, shake = 0, state = 'idle', actors = [], labels = [];
 
   function Actor(name, rig, img, seat) {
     const view = seat.far ? rig.front : rig.back, lookRight = seat.dir > 0;
@@ -1412,7 +1412,7 @@ function saloonBoot() {
     victim.dead.kind = new URLSearchParams(location.search).get('death') || (roll < .34 ? 'slump' : roll < .67 ? 'back' : 'side'); // ?death= forces one, for checking
     victim.dead.side = Math.random() < .5 ? -1 : 1;
     labels[victim.seatIndex] && (labels[victim.seatIndex].className = 'rt-name out');
-    bang = { t0: performance.now(), at: bangSpot() };
+    showBang();
     alive().forEach((a, i) => { face(a, 'shock', 20); say(a, i % 2 ? '!!' : '!', 18); fx(a, 'recoil', 10); busy(a, 30);
       atR(18 + i * 3, () => react(a, 'lose')); });
     announce(`BANG! ${NAMES[victim.name]} is out.`);
@@ -1454,35 +1454,41 @@ function saloonBoot() {
     // no clear spot (narrow block): above the table, poking past the top edge is fine
     return { x: ww / 2 + (Math.random() - .5) * ww * .3, y: Math.max(hh * .5, tb.y0 - hh), s, r: (Math.random() - .5) * .5 };
   }
-  let ovDirty = false;
-  function drawBang(now) {
-    const d = devicePixelRatio || 1;
-    if (!bang && !ovDirty) return;
-    octx.setTransform(1, 0, 0, 1, 0, 0); octx.clearRect(0, 0, ov.width, ov.height); ovDirty = !!bang;
-    if (!bang) return;
-    const p = (now - bang.t0) / 1000, IN = .07, HOLD = .5, OUT = .14;
-    if (p > IN + HOLD + OUT) { bang = null; return; }
-    const over = q => { q = Math.min(1, Math.max(0, q)); return 1 + 2.9 * (q - 1) ** 3 + 1.9 * (q - 1) ** 2; };
-    const { x, y, s, r } = bang.at, sc = s * (p < IN ? .25 + .75 * over(p / IN) : p < IN + HOLD ? 1 + .02 * Math.sin(p * 50) : 1 + (p - IN - HOLD) / OUT * .15);
-    octx.setTransform(d, 0, 0, d, 0, 0);
-    octx.globalAlpha = p < IN + HOLD ? 1 : 1 - (p - IN - HOLD) / OUT;
-    octx.translate(x, y); octx.rotate(r); octx.scale(sc, sc);
-    octx.lineCap = 'round';
+  const BANG_W = 620, BANG_H = 392; // panel box at scale 1, speed lines included
+  function paintBang(sc) { // sc = CSS px per panel unit; drawn sharp for the biggest size it reaches
+    const d = (devicePixelRatio || 1) * sc * 1.15, g = bangEl.getContext('2d');
+    bangEl.width = Math.ceil(BANG_W * d); bangEl.height = Math.ceil(BANG_H * d);
+    bangEl.style.width = BANG_W * sc + 'px'; bangEl.style.height = BANG_H * sc + 'px';
+    g.setTransform(d, 0, 0, d, BANG_W * d / 2, BANG_H * d / 2);
+    g.lineCap = 'round';
     for (let i = 0; i < 26; i++) { // speed lines
       const a = i / 26 * Math.PI * 2 + .12, r0 = 170 + (i * 29) % 30, r1 = 250 + (i * 53) % 50;
-      octx.beginPath(); octx.moveTo(Math.cos(a) * r0, Math.sin(a) * r0 * .62); octx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1 * .62);
-      octx.strokeStyle = INK; octx.lineWidth = 3 + (i % 3); octx.stroke();
+      g.beginPath(); g.moveTo(Math.cos(a) * r0, Math.sin(a) * r0 * .62); g.lineTo(Math.cos(a) * r1, Math.sin(a) * r1 * .62);
+      g.strokeStyle = INK; g.lineWidth = 3 + (i % 3); g.stroke();
     }
     const star = (R, rr, n, c, lw) => {
-      octx.beginPath();
-      for (let i = 0; i < n * 2; i++) { const a = i / (n * 2) * Math.PI * 2, q = i % 2 ? rr : R + ((i * 37) % 5) * 6; octx.lineTo(Math.cos(a) * q, Math.sin(a) * q * .62); }
-      octx.closePath(); octx.fillStyle = c; octx.fill();
-      if (lw) { octx.lineWidth = lw; octx.strokeStyle = INK; octx.lineJoin = 'round'; octx.stroke(); }
+      g.beginPath();
+      for (let i = 0; i < n * 2; i++) { const a = i / (n * 2) * Math.PI * 2, q = i % 2 ? rr : R + ((i * 37) % 5) * 6; g.lineTo(Math.cos(a) * q, Math.sin(a) * q * .62); }
+      g.closePath(); g.fillStyle = c; g.fill();
+      if (lw) { g.lineWidth = lw; g.strokeStyle = INK; g.lineJoin = 'round'; g.stroke(); }
     };
     star(178, 128, 14, ORANGE, 5); star(150, 112, 14, GOLD, 0);
-    octx.font = '92px Rye, Georgia, serif'; octx.textAlign = 'center'; octx.textBaseline = 'middle'; octx.lineJoin = 'round';
-    octx.lineWidth = 18; octx.strokeStyle = INK; octx.strokeText('BANG!', 0, 6); octx.fillStyle = RUST; octx.fillText('BANG!', 0, 6);
-    octx.globalAlpha = 1;
+    g.font = '92px Rye, Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    g.lineWidth = 18; g.strokeStyle = INK; g.strokeText('BANG!', 0, 6); g.fillStyle = RUST; g.fillText('BANG!', 0, 6);
+    bangArt = sc;
+  }
+  function showBang() {
+    const { x, y, s: sc, r } = bangSpot();
+    if (bangArt !== sc) paintBang(sc);
+    const at = k => `translate(${x - BANG_W * sc / 2}px,${y - BANG_H * sc / 2}px) rotate(${r}rad) scale(${k})`;
+    bangEl.getAnimations().forEach(a => a.cancel());
+    bangEl.animate([
+      { transform: at(.25), opacity: 1 },
+      { transform: at(1.07), opacity: 1, offset: .1 },
+      { transform: at(1), opacity: 1, offset: .17 },
+      { transform: at(1.02), opacity: 1, offset: .8 },
+      { transform: at(1.15), opacity: 0 },
+    ], { duration: 710, easing: 'ease-out' });
   }
 
   // ---------- names over heads ----------
@@ -1501,7 +1507,7 @@ function saloonBoot() {
   }
 
   // ---------- frame ----------
-  let lastTick = 0, ticked = false, frac = 0, dtk = 1, lastFrame = 0, shx = 0, shy = 0;
+  let ticked = false, shx = 0, shy = 0;
 
   // ---------- light: one lamp hangs over the table, in the site's colours (follows the light/dark theme) ----------
   // The finished frame is multiplied by a deep teal falloff around the table, then the lamp's glow is screened on
@@ -1548,7 +1554,8 @@ function saloonBoot() {
     [[2, 0], [3, 1], [4, 2], [5, 3], [6, 4]].forEach(([hw, k]) => { rect(ctx, LAMP.x - hw, LAMP.y - 5 + k, hw * 2 + 1, 1, INK); if (hw > 2) rect(ctx, LAMP.x - hw + 1, LAMP.y - 5 + k, hw * 2 - 1, 1, k < 2 ? SLATE : DUSK); });
     rect(ctx, LAMP.x - 5, LAMP.y, 11, 1, INK); rect(ctx, LAMP.x - 2, LAMP.y, 5, 1, CREAM); dot(ctx, LAMP.x - 1, LAMP.y + 1, light.fire); dot(ctx, LAMP.x, LAMP.y + 1, CREAM); dot(ctx, LAMP.x + 1, LAMP.y + 1, light.fire);
   }
-  function update(now) {
+  function update(now, doTick) {
+    ticked = doTick;
     if (gun.spin) { // fast spin with a hard ease-out; whoever the barrel is passing near the end braces
       const s = gun.spin, p = Math.min(1, (now - s.t0) / s.dur), e = 1 - (1 - p) ** 3;
       gun.ang = s.from + (s.to - s.from) * e;
@@ -1558,11 +1565,7 @@ function saloonBoot() {
       });
       if (p >= 1) { gun.spin = null; gun.ang = s.to % (Math.PI * 2); const v = s.victim; face(v, 'shock', 6); say(v, '!!', 6); fx(v, 'jitter', 4); state = 'aim'; at(2, () => shoot(v)); }
     }
-    dtk = Math.min(3, (now - (lastFrame || now)) / (1000 / 24)); lastFrame = now; // motion per frame, in 24 fps units
-    ticked = now - lastTick >= TICK_MS;
-    frac = ticked ? 0 : (now - lastTick) / TICK_MS; // how far between ticks, for smooth in-flight cards
     if (!ticked) return;
-    lastTick = now - lastTick < TICK_MS * 3 ? lastTick + TICK_MS : now;
     tick++;
     shx = shake ? Math.round((Math.random() - .5) * 3) : 0; shy = shake ? Math.round((Math.random() - .5) * 3) : 0; // shake steps with the game, not the screen
     for (let i = later.length - 1; i >= 0; i--) if (later[i] && later[i][0] <= tick) { const fn = later[i][1]; later.splice(i, 1); fn(); }
@@ -1590,9 +1593,8 @@ function saloonBoot() {
     }
   }
   // frame budget by what's on screen: the spin and BANG at 60 fps, cards/chips/blood in flight at 30, otherwise the 12 game ticks
-  const frameGap = () => gun.spin || bang ? 1000 / 61 : flyers.length || drops.length || shake || gun.recoil > 0 ? 1000 / 31 : TICK_MS - 1;
-  function render(now) {
-    update(now);
+  function render(now, doTick) {
+    update(now, doTick);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H);
     if (shake) ctx.translate(shx, shy);
@@ -1602,7 +1604,7 @@ function saloonBoot() {
     ctx.drawImage(stain, 0, dy);
     drawPot(dy);
     for (let i = flyers.length - 1; i >= 0; i--) {
-      const f = flyers[i], t = (tick + frac - f.t0) / f.dur;
+      const f = flyers[i], t = (tick - f.t0) / f.dur;
       if (t >= 1) { flyers.splice(i, 1); f.land && f.land(); continue; }
       const x = f.from[0] + (f.to[0] - f.from[0]) * t, y = f.from[1] + (f.to[1] - f.from[1]) * t - Math.sin(Math.PI * t) * 10;
       f.kind === 'card' ? drawCard(x - 2, y - 2, false) : drawChip(Math.round(x - 2), Math.round(y - 1), CHIP[i % 3]);
@@ -1614,7 +1616,7 @@ function saloonBoot() {
     }
     for (let i = drops.length - 1; i >= 0; i--) { // blood in the air
       const b = drops[i];
-      b.x += b.vx * .5 * dtk; b.y += b.vy * .5 * dtk; b.vy += .18 * dtk;
+      if (ticked) for (let k = 0; k < 2; k++) { b.x += b.vx * .5; b.y += b.vy * .5; b.vy += .18; } // two 24 fps steps per tick
       const sx = Math.round(b.x), sy = Math.round(b.y);
       if (b.vy > 0 && onFelt(sx, sy) && Math.random() < .2) { rect(sctx, sx, sy, b.big ? 2 : 1, 1, b.c); drops.splice(i, 1); continue; }
       if (b.y > b.floor || b.x < 0 || b.x > W) { drops.splice(i, 1); continue; }
@@ -1630,7 +1632,6 @@ function saloonBoot() {
     }
     drawLight();
     for (const a of actors) if (a.bubble) { const [x, y] = headPoint(a); bubble(x + (a.mirror ? -6 : 6), y - 1 - ((tick >> 2) % 2), a.bubble); }
-    drawBang(now);
     placeLabels();
   }
 
@@ -1653,7 +1654,18 @@ function saloonBoot() {
       at(6, round);
       let last = 0, visible = true;
       if (window.IntersectionObserver) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(cv);
-      const loop = now => { requestAnimationFrame(loop); if (!visible || document.hidden || now - last < frameGap()) return; last = now; render(now); };
+      // Steady 12 fps: a tick every N display frames (N learned from the monitor's refresh), so every frame is held
+      // equally long instead of 5-6-5-5; the gun spin alone also draws in between, to keep it a smooth whirl.
+      let frameMs = 1000 / 60, lastRaf = 0, since = 0;
+      const loop = now => {
+        requestAnimationFrame(loop);
+        const dt = now - lastRaf; lastRaf = now;
+        if (dt > 3 && dt < 60) frameMs += (dt - frameMs) * .05;
+        if (!visible || document.hidden) return;
+        since++;
+        if (since >= Math.max(1, Math.round(TICK_MS / frameMs)) || now - last > TICK_MS * 1.6) { since = 0; last = now; render(now, true); }
+        else if (gun.spin) render(now, false);
+      };
       requestAnimationFrame(loop);
     });
   });
