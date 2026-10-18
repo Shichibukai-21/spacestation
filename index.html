@@ -3,7 +3,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@600;800&family=Rye&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@600;800&family=Rye&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
 <style>
 /* Direction: Nothing-style instrument. Monochrome graphite + one signal colour (deep teal); fire follows the theme.
    Layout: a 24×24 design board the size of the screen. Every block (brand, theme, clock, recent, camp, search, modules, table) sits on the grid and can be moved/resized in Arrange mode. */
@@ -15,18 +15,19 @@
   --dots:"Doto","DotGothic16",ui-monospace,monospace;
   --body:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"Geist Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+  --glass-a:rgba(0,0,0,.16); --glass-b:rgba(0,0,0,.26); --glass-ha:rgba(0,0,0,.10); --glass-hb:rgba(0,0,0,.20);
   color-scheme:dark;
 }
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
   --bg:#EFF0EE; --card:#FAFAF9; --card-hi:#FFFFFF; --fg:#111312; --muted:#6B7270; --line:#DCDEDB; --dot-off:#DADDDA; --plate:#FFFFFF;
   --signal:#1C7F75; --signal-soft:rgba(28,127,117,.10); --danger:#C2413B; --scrim:rgba(20,22,21,.35);
   --fire:#F0A23A; --fire-core:#FFF0C4; --grid:rgba(28,127,117,.12);
-  --t3-skin:#F4F3EF; --t3-shirt:#DFE2DE; --t3-wood:#E9E6DF; --t3-ink:#1B1E1D; --t3-metal:#8E9794; --t3-chair:#D6D4CD; color-scheme:light}}
+  --t3-skin:#F4F3EF; --t3-shirt:#DFE2DE; --t3-wood:#E9E6DF; --t3-ink:#1B1E1D; --t3-metal:#8E9794; --t3-chair:#D6D4CD; --glass-a:rgba(255,255,255,.42); --glass-b:rgba(240,248,247,.22); --glass-ha:rgba(255,255,255,.62); --glass-hb:rgba(240,248,247,.38); color-scheme:light}}
 :root[data-theme="light"]{
   --bg:#EFF0EE; --card:#FAFAF9; --card-hi:#FFFFFF; --fg:#111312; --muted:#6B7270; --line:#DCDEDB; --dot-off:#DADDDA; --plate:#FFFFFF;
   --signal:#1C7F75; --signal-soft:rgba(28,127,117,.10); --danger:#C2413B; --scrim:rgba(20,22,21,.35);
   --fire:#F0A23A; --fire-core:#FFF0C4; --grid:rgba(28,127,117,.12);
-  --t3-skin:#F4F3EF; --t3-shirt:#DFE2DE; --t3-wood:#E9E6DF; --t3-ink:#1B1E1D; --t3-metal:#8E9794; --t3-chair:#D6D4CD; color-scheme:light}
+  --t3-skin:#F4F3EF; --t3-shirt:#DFE2DE; --t3-wood:#E9E6DF; --t3-ink:#1B1E1D; --t3-metal:#8E9794; --t3-chair:#D6D4CD; --glass-a:rgba(255,255,255,.42); --glass-b:rgba(240,248,247,.22); --glass-ha:rgba(255,255,255,.62); --glass-hb:rgba(240,248,247,.38); color-scheme:light}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -307,16 +308,16 @@ body{position:relative;background:radial-gradient(var(--dot-off) 1px,transparent
 /* ---------- glass: cards are frosted panes over the starfield grid ---------- */
 .card,.module,.site,.rec,.rec-empty,.search input,.tg-glass{
   /* a light sheen across the top-left, a thin tint of the card colour, and a strong blur of what's behind */
-  background:linear-gradient(135deg,color-mix(in srgb,#fff 11%,transparent) 0%,color-mix(in srgb,#fff 3%,transparent) 38%,transparent 62%),
-    linear-gradient(160deg,color-mix(in srgb,var(--card-hi) 20%,transparent),color-mix(in srgb,var(--card) 8%,transparent));
-  -webkit-backdrop-filter:blur(10px) saturate(170%);backdrop-filter:blur(10px) saturate(170%);
+  background:linear-gradient(135deg,color-mix(in srgb,#fff 3.4%,transparent) 0%,color-mix(in srgb,#fff .8%,transparent) 38%,transparent 62%),
+    linear-gradient(160deg,var(--glass-a),var(--glass-b));
+  /* no backdrop-filter: at this clarity the blur was invisible, left seams on some cards and made every animation behind them repaint the cards */
   border-color:color-mix(in srgb,var(--fg) 15%,transparent);
   box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 20%,transparent),inset 1px 0 0 color-mix(in srgb,#fff 7%,transparent),
     inset 0 -1px 0 color-mix(in srgb,#000 14%,transparent),0 18px 40px -24px rgba(0,0,0,.6)}
 .module:hover,.site:hover,.site.first,.rec:hover{background:linear-gradient(135deg,color-mix(in srgb,#fff 15%,transparent) 0%,color-mix(in srgb,#fff 5%,transparent) 40%,transparent 64%),
-  linear-gradient(160deg,color-mix(in srgb,var(--card-hi) 34%,transparent),color-mix(in srgb,var(--card) 18%,transparent))}
+  linear-gradient(160deg,var(--glass-ha),var(--glass-hb))}
 .themer{border-radius:50%;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.tg-bg{fill:color-mix(in srgb,var(--card) 55%,transparent)}
+.tg-bg{fill:var(--glass-b)}
 /* recently opened reads right-to-left when it lives on the right side of the board */
 @media (min-width:900px){
   .b-recent.mirror .label{text-align:right}
@@ -973,14 +974,14 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
 // Characters are composed each frame from pixel layers (out/<name>.png + out/rig.json, built by build.py).
 // Runs standalone (scene.html, canvas#scene) and on the site (index.html, canvas#rt), where bake.py embeds the
 // sprites as window.SALOON_DATA.
-(() => {
+function saloonBoot() {
   const cv = document.getElementById('rt') || document.getElementById('scene');
   if (!cv) return;
   const wrap = cv.parentElement, live = document.getElementById('rtlive');
-  const W = 208, H = 180, FPS = 24, TICK = 2; // render at 24 fps, game logic at 12 (every 2nd frame)
+  const Z = 1 / .85, W = Math.round(208 * Z), H = Math.round(180 * Z), TICK_MS = 1000 / 12; // drawn every display frame; game logic ticks 12 times a second
   const P = ['#2e222f', '#45293f', '#7a3045', '#993d41', '#cd683d', '#fbb954', '#f2ec8b', '#b0a987', '#997f73', '#665964', '#443846', '#576069', '#788a87', '#a9b2a2'];
   const [INK, PLUM, WINE, RUST, ORANGE, GOLD, CREAM, TAN, TAUPE, MAUVE, DUSK, SLATE, SAGE, MIST] = P;
-  const T = { cx: 104, cy: 100, rx: 50, ry: 19, drop: 30 }; // table top ellipse; drop = cloth height at the sides
+  const T = { cx: W >> 1, cy: 112, rx: Math.round(50 * Z), ry: Math.round(19 * Z), drop: Math.round(30 * Z) }; // table top ellipse; drop = cloth height at the sides
   const NAMES = { orca: 'Moz', cat: 'Omar', raven: 'Ali', buffalo: 'Bakr', croc: 'Mustafa', walrus: 'Hameed' };
 
   // Personality: which faces and bubbles each one reaches for. Faces a rig lacks fall back via ALIAS.
@@ -1015,9 +1016,9 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
     const r = wrap === document.body ? { width: innerWidth, height: innerHeight } : wrap.getBoundingClientRect();
     if (!r.width || !r.height) return;
     const k = Math.min(r.width / W, r.height / H);
-    scale = k >= 2 ? Math.floor(k) : k;
+    scale = k;
     cv.style.width = W * scale + 'px'; cv.style.height = H * scale + 'px';
-    fitOverlay();
+    fitOverlay(); at0 = null;
   }
 
   // BANG! panel lives on its own overlay so it can pop up anywhere in the block, never over the table.
@@ -1111,7 +1112,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
       const d = ((x - T.cx) / T.rx) ** 2 + ((y - T.cy) / T.ry) ** 2;
       if (d > .72) { dot(g, x, y, d > .86 ? RUST : WINE); continue; }
       if (d > .66) { dot(g, x, y, INK); continue; }
-      const light = ((x - T.cx) / 30) ** 2 + ((y - T.cy) / 11) ** 2;
+      const light = ((x - T.cx) / (30 * Z)) ** 2 + ((y - T.cy) / (11 * Z)) ** 2;
       dot(g, x, y, light < .5 || (light < 1 && (x + y) % 2 === 0) ? SAGE : SLATE);
     }
   });
@@ -1178,7 +1179,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
   const flyers = [], puffs = [], drops = [];
   const pot = { cards: [], chips: 0 };
   const gun = { ang: Math.random() * Math.PI * 2, spin: null, recoil: 0 };
-  let winAt = 0, queued = false, shake = 0, bang = null, state = 'idle', actors = [], labels = [];
+  let winAt = 0, shake = 0, bang = null, state = 'idle', actors = [], labels = [];
 
   function Actor(name, rig, img, seat) {
     const view = seat.far ? rig.front : rig.back, lookRight = seat.dir > 0;
@@ -1301,8 +1302,8 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
 
   // ---------- cards and chips ----------
   function fly(kind, from, to, dur, land) { flyers.push({ kind, from, to, t0: tick, dur, land }); }
-  const cardSpot = () => [T.cx - 33 + Math.round(Math.random() * 6), T.cy - 3 + Math.round(Math.random() * 6)];
-  const chipSpot = () => [T.cx + 23, T.cy];
+  const cardSpot = () => [T.cx - Math.round(33 * Z) + Math.round(Math.random() * 6), T.cy - 3 + Math.round(Math.random() * 6)];
+  const chipSpot = () => [T.cx + Math.round(23 * Z), T.cy];
   function drawCard(x, y, flat) {
     x = Math.round(x); y = Math.round(y);
     if (flat) { rect(ctx, x, y, 7, 4, INK); rect(ctx, x + 1, y + 1, 5, 2, MIST); rect(ctx, x + 2, y + 1, 3, 2, WINE); }
@@ -1312,7 +1313,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
   function drawChip(x, y, c) { rect(ctx, x, y, 4, 3, INK); rect(ctx, x + 1, y, 2, 1, c); rect(ctx, x, y + 1, 4, 1, c); }
   function drawPot(dy) {
     pot.cards.forEach(([x, y]) => drawCard(x, y + dy, true));
-    const stacks = [[T.cx + 17, T.cy + 2], [T.cx + 22, T.cy - 1], [T.cx + 27, T.cy + 2]];
+    const stacks = [17, 22, 27].map((d, i) => [T.cx + Math.round(d * Z), T.cy + (i % 2 ? -1 : 2)]);
     for (let i = 0; i < pot.chips; i++) {
       const [sx, sy] = stacks[i % 3], h = Math.floor(i / 3);
       drawChip(sx, sy - h * 2 + dy - (shake && i % 2 ? 1 : 0), CHIP[i % 3]);
@@ -1324,7 +1325,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
 
   // ---------- idle life: card rounds, personality bits ----------
   function react(a, kind) {
-    if (!a.alive) return;
+    if (!a.alive || (a.win && kind === 'lose')) return;
     const p = PERS[a.name];
     if (kind === 'win') { face(a, p.win[0], 24); say(a, p.win[1] === '$' ? 'note' : p.win[1], 18); fx(a, 'bounce', 12); } // took a hand
     if (kind === 'lose') {
@@ -1377,17 +1378,19 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
   }
 
   // ---------- the game: spin, BANG, last one standing ----------
+  const WIN_LOCK = 36; // ticks (3 s) of victory lap; then the next game starts
+  let lastSpin = -1e9; const SPIN_GAP = 1000; // ms: one shot per second at most
   const announce = t => { if (live) live.textContent = t; };
   function spin() {
-    if (state === 'win') { if (tick - winAt > 36) reset(); return; } // the winner gets 3 s before a click can start a new game
-    if (state !== 'idle') { queued = true; return; } // clicked mid-spin or mid-shot: spin again as soon as it's free
-    queued = false;
+    if (state === 'win') { if (tick - winAt > WIN_LOCK) reset(); return; } // the winner's moment can't be clicked away
+    if (state !== 'idle' || performance.now() - lastSpin < SPIN_GAP) return; // extra clicks inside that second do nothing
+    lastSpin = performance.now();
     const ps = alive(); if (ps.length < 2) return;
     state = 'spin'; cv.classList.add('busy');
     gen++; flyers.length = 0; // the card game (and reactions still queued) stop for this
     const victim = rnd(ps), turns = 2 + Math.floor(Math.random() * 2);
     let goal = angleTo(victim); while (goal < gun.ang) goal += Math.PI * 2;
-    gun.spin = { t0: performance.now(), dur: 620 + Math.random() * 200, from: gun.ang, to: goal + turns * Math.PI * 2, victim };
+    gun.spin = { t0: performance.now(), dur: 520 + Math.random() * 120, from: gun.ang, to: goal + turns * Math.PI * 2, victim };
     ps.forEach(a => { a.bubble = null; a.fx = []; face(a, 'neutral', 1); });
     announce('The revolver spins…');
   }
@@ -1418,23 +1421,23 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
       if (left.length === 1) {
         const w = left[0]; w.win = true; state = 'win';
         labels[w.seatIndex] && (labels[w.seatIndex].className = 'rt-name win');
-        winAt = tick; queued = false;
+        winAt = tick; cv.classList.add('busy'); 
         announce(`${NAMES[w.name]} survives.`);
         // victory lap: a belly laugh, then a smirk and a tip of the hat, over and over until the next game
         const smirk = has(w, 'smug') ? 'smug' : 'blink';
-        for (let k = 0; k < 4; k++) {
-          at(4 + k * 26, () => { if (state !== 'win') return; face(w, 'laugh', 13); say(w, 'HA', 12); fx(w, 'bounce', 12); if (w.name === 'walrus') smokeFrom(w, true); });
-          at(17 + k * 26, () => { if (state !== 'win') return; face(w, smirk, 13); say(w, '$', 12); fx(w, 'hop', 4); at(6, () => state === 'win' && fx(w, 'hop', 4)); });
+        for (let k = 0; k < 2; k++) {
+          at(1 + k * 26, () => { if (state !== 'win') return; face(w, 'laugh', 13); say(w, 'HA', 12); fx(w, 'bounce', 12); if (w.name === 'walrus') smokeFrom(w, true); });
+          at(14 + k * 26, () => { if (state !== 'win') return; face(w, smirk, 13); say(w, '$', 12); fx(w, 'hop', 4); at(6, () => state === 'win' && fx(w, 'hop', 4)); });
         }
-        at(110, () => state === 'win' && reset());
-      } else { state = 'idle'; cv.classList.remove('busy'); atR(36, round); if (queued) spin(); }
+        at(WIN_LOCK, () => state === 'win' && reset());
+      } else { state = 'idle'; cv.classList.remove('busy'); atR(36, round); } // the body keeps falling while the next spin starts
     });
   }
   function reset() {
     actors.forEach(a => { a.alive = true; a.dead = null; a.win = false; a.expr = 'neutral'; a.fx = []; });
     labels.forEach(l => l.className = 'rt-name');
     sctx.clearRect(0, 0, W, H); drops.length = 0; pot.cards.length = 0; pot.chips = 0; gen++;
-    state = 'idle'; cv.classList.remove('busy'); announce(''); queued = false;
+    state = 'idle'; cv.classList.remove('busy'); announce('');
     atR(6, round);
   }
 
@@ -1451,9 +1454,11 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
     // no clear spot (narrow block): above the table, poking past the top edge is fine
     return { x: ww / 2 + (Math.random() - .5) * ww * .3, y: Math.max(hh * .5, tb.y0 - hh), s, r: (Math.random() - .5) * .5 };
   }
+  let ovDirty = false;
   function drawBang(now) {
     const d = devicePixelRatio || 1;
-    octx.setTransform(1, 0, 0, 1, 0, 0); octx.clearRect(0, 0, ov.width, ov.height);
+    if (!bang && !ovDirty) return;
+    octx.setTransform(1, 0, 0, 1, 0, 0); octx.clearRect(0, 0, ov.width, ov.height); ovDirty = !!bang;
     if (!bang) return;
     const p = (now - bang.t0) / 1000, IN = .07, HOLD = .5, OUT = .14;
     if (p > IN + HOLD + OUT) { bang = null; return; }
@@ -1481,20 +1486,68 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
   }
 
   // ---------- names over heads ----------
+  let at0 = null; // canvas position inside the block, measured once per resize
+  const canvasAt = () => at0 ??= (() => { const cr = cv.getBoundingClientRect(), wr = wrap.getBoundingClientRect(); return { left: cr.left - wr.left, top: cr.top - wr.top }; })();
   function placeLabels() {
-    const cr = cv.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+    const { left: ox, top: oy } = canvasAt();
     actors.forEach(a => {
       const l = labels[a.seatIndex]; if (!l) return;
       const o = a.dead ? offsets(a) : { by: 0 };
       // behind the table: name above the hat; front seats: under the chair, so it never sits on someone's face
       const [x] = headPoint(a), y = a.seat.far ? a.y + Math.min(o.by, 6) - 2 : a.seat.base + 20;
-      const tr = `translate(${Math.round(cr.left - wr.left + x * scale)}px,${Math.round(cr.top - wr.top + y * scale)}px) translate(-50%,${a.seat.far ? '-100%' : '0'})`;
+      const tr = `translate(${Math.round(ox + x * scale)}px,${Math.round(oy + y * scale)}px) translate(-50%,${a.seat.far ? '-100%' : '0'})`;
       if (l.style.transform !== tr) l.style.transform = tr;
     });
   }
 
   // ---------- frame ----------
-  let frameNo = 0;
+  let lastTick = 0, ticked = false, frac = 0, dtk = 1, lastFrame = 0, shx = 0, shy = 0;
+
+  // ---------- light: one lamp hangs over the table, in the site's colours (follows the light/dark theme) ----------
+  // The finished frame is multiplied by a deep teal falloff around the table, then the lamp's glow is screened on
+  // top, all clipped to what was drawn. A faint beam and the lamp itself go over that.
+  const lit = document.createElement('canvas'); lit.width = W; lit.height = H;
+  const lctx = lit.getContext('2d');
+  const LAMP = { x: T.cx, y: 12 }; // underside of the shade
+  const mix = (a, b, k) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - k) + parseInt(b.substr(i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
+  let light = null;
+  function readLight() {
+    const cs = getComputedStyle(cv), v = n => (cs.getPropertyValue(n).trim().match(/^#[0-9a-f]{6}$/i) || [''])[0];
+    const sig = v('--signal'), fire = v('--fire') || sig, bg = v('--bg') || '#000000';
+    const day = parseInt(bg.substr(1, 2), 16) > 128; // light theme: a lamp in a bright room, so the shade stays soft
+    if (!sig) { light = null; return; }
+    if (light && light.key === sig + fire + day) return;
+    const deep = '#081615';
+    const shade = lctx.createRadialGradient(T.cx, T.cy - 4, 4, T.cx, T.cy + 4, W * .6);
+    shade.addColorStop(0, '#ffffff');
+    if (day) { shade.addColorStop(.35, mix('#ffffff', sig, .06)); shade.addColorStop(.7, mix('#ffffff', sig, .2)); shade.addColorStop(1, mix('#ffffff', sig, .34)); }
+    else { shade.addColorStop(.3, mix('#ffffff', sig, .18)); shade.addColorStop(.6, mix(sig, deep, .28)); shade.addColorStop(1, mix(sig, deep, .82)); }
+    const glow = lctx.createRadialGradient(T.cx, T.cy - 2, 0, T.cx, T.cy - 2, T.rx * 1.25);
+    glow.addColorStop(0, fire + '70'); glow.addColorStop(.45, fire + '2a'); glow.addColorStop(1, fire + '00');
+    const beam = ctx.createLinearGradient(0, LAMP.y, 0, T.cy + T.ry);
+    beam.addColorStop(0, fire + '2c'); beam.addColorStop(1, fire + '00');
+    light = { key: sig + fire + day, shade, glow, beam, fire };
+  }
+  // Re-light the instant the theme flips (same signals the page's own theme switch uses) and redraw at once, so the
+  // table changes in step with the page's reveal instead of on the next poll.
+  const relight = () => { readLight(); if (actors.length) render(performance.now()); };
+  readLight();
+  new MutationObserver(relight).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', relight);
+  function drawLight() {
+    if (!light) return;
+    const flick = .93 + (tick % 19 < 1 ? -.08 : Math.sin(tick * .6) * .03); // a live bulb, not a flat filter
+    lctx.globalCompositeOperation = 'copy'; lctx.globalAlpha = 1; lctx.drawImage(cv, 0, 0);
+    lctx.globalCompositeOperation = 'multiply'; lctx.fillStyle = light.shade; lctx.fillRect(0, 0, W, H);
+    lctx.globalCompositeOperation = 'screen'; lctx.globalAlpha = flick; lctx.fillStyle = light.glow; lctx.fillRect(0, 0, W, H);
+    lctx.globalCompositeOperation = 'destination-in'; lctx.globalAlpha = 1; lctx.drawImage(cv, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H); ctx.drawImage(lit, 0, 0);
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = flick; ctx.fillStyle = light.beam; // the beam
+    ctx.beginPath(); ctx.moveTo(LAMP.x - 5, LAMP.y); ctx.lineTo(LAMP.x + 5, LAMP.y); ctx.lineTo(T.cx + T.rx * .8, T.cy); ctx.lineTo(T.cx - T.rx * .8, T.cy); ctx.fill(); ctx.restore();
+    rect(ctx, LAMP.x, 0, 1, LAMP.y - 5, INK); // cord and shade
+    [[2, 0], [3, 1], [4, 2], [5, 3], [6, 4]].forEach(([hw, k]) => { rect(ctx, LAMP.x - hw, LAMP.y - 5 + k, hw * 2 + 1, 1, INK); if (hw > 2) rect(ctx, LAMP.x - hw + 1, LAMP.y - 5 + k, hw * 2 - 1, 1, k < 2 ? SLATE : DUSK); });
+    rect(ctx, LAMP.x - 5, LAMP.y, 11, 1, INK); rect(ctx, LAMP.x - 2, LAMP.y, 5, 1, CREAM); dot(ctx, LAMP.x - 1, LAMP.y + 1, light.fire); dot(ctx, LAMP.x, LAMP.y + 1, CREAM); dot(ctx, LAMP.x + 1, LAMP.y + 1, light.fire);
+  }
   function update(now) {
     if (gun.spin) { // fast spin with a hard ease-out; whoever the barrel is passing near the end braces
       const s = gun.spin, p = Math.min(1, (now - s.t0) / s.dur), e = 1 - (1 - p) ** 3;
@@ -1505,8 +1558,13 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
       });
       if (p >= 1) { gun.spin = null; gun.ang = s.to % (Math.PI * 2); const v = s.victim; face(v, 'shock', 6); say(v, '!!', 6); fx(v, 'jitter', 4); state = 'aim'; at(2, () => shoot(v)); }
     }
-    if (++frameNo % TICK) return;
+    dtk = Math.min(3, (now - (lastFrame || now)) / (1000 / 24)); lastFrame = now; // motion per frame, in 24 fps units
+    ticked = now - lastTick >= TICK_MS;
+    frac = ticked ? 0 : (now - lastTick) / TICK_MS; // how far between ticks, for smooth in-flight cards
+    if (!ticked) return;
+    lastTick = now - lastTick < TICK_MS * 3 ? lastTick + TICK_MS : now;
     tick++;
+    shx = shake ? Math.round((Math.random() - .5) * 3) : 0; shy = shake ? Math.round((Math.random() - .5) * 3) : 0; // shake steps with the game, not the screen
     for (let i = later.length - 1; i >= 0; i--) if (later[i] && later[i][0] <= tick) { const fn = later[i][1]; later.splice(i, 1); fn(); }
     for (const a of actors) {
       a.fx = a.fx.filter(f => f.until > tick);
@@ -1535,14 +1593,14 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
     update(now);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    if (shake) ctx.translate(Math.round((Math.random() - .5) * 3), Math.round((Math.random() - .5) * 3));
+    if (shake) ctx.translate(shx, shy);
     const dy = shake % 2;
     actors.filter(a => a.seat.far).sort((p, q) => p.y + p.h - q.y - q.h).forEach(drawActor);
     ctx.drawImage(table, 0, dy);
     ctx.drawImage(stain, 0, dy);
     drawPot(dy);
     for (let i = flyers.length - 1; i >= 0; i--) {
-      const f = flyers[i], t = (tick - f.t0) / f.dur;
+      const f = flyers[i], t = (tick + frac - f.t0) / f.dur;
       if (t >= 1) { flyers.splice(i, 1); f.land && f.land(); continue; }
       const x = f.from[0] + (f.to[0] - f.from[0]) * t, y = f.from[1] + (f.to[1] - f.from[1]) * t - Math.sin(Math.PI * t) * 10;
       f.kind === 'card' ? drawCard(x - 2, y - 2, false) : drawChip(Math.round(x - 2), Math.round(y - 1), CHIP[i % 3]);
@@ -1554,7 +1612,7 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
     }
     for (let i = drops.length - 1; i >= 0; i--) { // blood in the air
       const b = drops[i];
-      b.x += b.vx * .5; b.y += b.vy * .5; b.vy += .18;
+      b.x += b.vx * .5 * dtk; b.y += b.vy * .5 * dtk; b.vy += .18 * dtk;
       const sx = Math.round(b.x), sy = Math.round(b.y);
       if (b.vy > 0 && onFelt(sx, sy) && Math.random() < .2) { rect(sctx, sx, sy, b.big ? 2 : 1, 1, b.c); drops.splice(i, 1); continue; }
       if (b.y > b.floor || b.x < 0 || b.x > W) { drops.splice(i, 1); continue; }
@@ -1562,12 +1620,13 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
     }
     for (let i = puffs.length - 1; i >= 0; i--) {
       const s = puffs[i];
-      if (frameNo % TICK === 0) { s.x += s.vx + Math.sin((s.age + i) / 3) * .2; s.y += s.vy; s.age++; }
+      if (ticked) { s.x += s.vx + Math.sin((s.age + i) / 3) * .2; s.y += s.vy; s.age++; }
       if (s.age > s.life) { puffs.splice(i, 1); continue; }
       const r = s.r + (s.age > s.life / 2 ? 1 : 0), c = s.age < s.life / 3 ? MIST : s.age < s.life * .7 ? SAGE : SLATE;
       if (s.age > s.life * .7 && (s.age + i) % 2) continue;
       for (let oy = -r; oy <= r; oy++) for (let ox = -r; ox <= r; ox++) if (ox * ox + oy * oy <= r * r + 1) dot(ctx, s.x + ox, s.y + oy, c);
     }
+    drawLight();
     for (const a of actors) if (a.bubble) { const [x, y] = headPoint(a); bubble(x + (a.mirror ? -6 : 6), y - 1 - ((tick >> 2) % 2), a.bubble); }
     drawBang(now);
     placeLabels();
@@ -1592,11 +1651,14 @@ window.SALOON_DATA={"rig":{"orca":{"side":-1,"look":-1,"front":{"w":55,"h":60,"c
       at(6, round);
       let last = 0, visible = true;
       if (window.IntersectionObserver) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(cv);
-      const loop = now => { requestAnimationFrame(loop); if (!visible || document.hidden || now - last < 1000 / FPS - 2) return; last = now; render(now); };
+      const loop = now => { requestAnimationFrame(loop); if (!visible || document.hidden || now - last < 1000 / 61) return; last = now; render(now); }; // up to 60 fps
       requestAnimationFrame(loop);
     });
   });
-})();
+}
+// Start after the page has loaded and painted, so the game never slows the first view of the start page.
+{ const go = () => (window.requestIdleCallback || setTimeout)(saloonBoot, { timeout: 1200 });
+  document.readyState === 'complete' ? go() : addEventListener('load', go); }
 /* ======================= /saloon roundtable ======================= */
 
 /* ======================= storage: this browser; a first visit starts from SHARED (your setup minus Work) ======================= */
