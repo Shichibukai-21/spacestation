@@ -1,5 +1,9 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>SpaceStation</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0B0C0C">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -513,11 +517,13 @@ addEventListener('resize',()=>{if(arranging&&!desktop())setArrange(false)});
 /* ======================= theme ======================= */
 const root=document.documentElement,mq=matchMedia('(prefers-color-scheme: dark)');
 const effTheme=()=>root.dataset.theme||(mq.matches?'dark':'light');
+const TOUCH=matchMedia('(hover:none) and (pointer:coarse)').matches; // phones and the Android app: long-press stands in for right-click
 const themeHooks=[];
-function themeChanged(){$('themer').classList.toggle('moon',effTheme()==='dark');$('themer').setAttribute('aria-label',effTheme()==='dark'?'Switch to light theme':'Switch to dark theme');themeHooks.forEach(f=>f())}
+function themeChanged(){const dark=effTheme()==='dark';document.querySelector('meta[name=theme-color]')?.setAttribute('content',dark?'#0B0C0C':'#EFF0EE');try{window.SSApp?.setTheme(dark)}catch{}$('themer').classList.toggle('moon',dark);$('themer').setAttribute('aria-label',effTheme()==='dark'?'Switch to light theme':'Switch to dark theme');themeHooks.forEach(f=>f())}
 try{const t=localStorage.getItem('ss-theme');if(t==='dark'||t==='light')root.dataset.theme=t}catch{}
 mq.addEventListener?.('change',themeChanged);
 new MutationObserver(themeChanged).observe(root,{attributes:true,attributeFilter:['data-theme']});
+themeChanged();
 $('themer').addEventListener('click',()=>{
   if(arranging)return;
   const next=effTheme()==='dark'?'light':'dark',r=$('themer').getBoundingClientRect();
@@ -629,13 +635,13 @@ function home(){
   if(!modules.length){$view.innerHTML=`<div class="empty">${glyph('star')}<div>No modules yet. Import your backup file, or ${matchMedia('(hover:none) and (pointer:coarse)').matches?'tap ⋯':'right-click here'} to add one.</div><button class="btn primary" data-import>Import backup</button></div>`;return}
   $view.innerHTML=`<div class="modules enter">${modules.map((c,i)=>`
     <button class="module" data-go="${esc(c.id)}" data-m="${i}" aria-label="Open ${esc(c.name)}"><span class="m-count">${pad(c.items.length)}</span>${glyph(c.glyph)}
-      <span class="m-name">${esc(c.name)}</span><span class="m-desc">${esc(c.desc)}</span></button>`).join('')}</div>${canWrite?'<p class="hint">Right-click to edit · arrange layout</p>':''}`;
+      <span class="m-name">${esc(c.name)}</span><span class="m-desc">${esc(c.desc)}</span></button>`).join('')}</div>${canWrite?`<p class="hint">${TOUCH?'Long-press to edit':'Right-click to edit · arrange layout'}</p>`:''}`;
 }
 function room(c,mi){
   $view.innerHTML=`<div class="room"><div class="room-head">
       <button class="back" data-go=""><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>Station</button>
       ${glyph(c.glyph,'sm')}<h2>${esc(c.name.toUpperCase())}</h2><span class="cnt">${pad(c.items.length)}</span></div>
-    ${c.items.length?`<div class="sites enter">${c.items.map((it,si)=>siteCard(it,c,false,mi,si)).join('')}</div>`:`<div class="empty">No sites here yet.${canWrite?' Right-click to add one.':''}</div>`}</div>`;
+    ${c.items.length?`<div class="sites enter">${c.items.map((it,si)=>siteCard(it,c,false,mi,si)).join('')}</div>`:`<div class="empty">No sites here yet.${canWrite?(TOUCH?' Long-press to add one.':' Right-click to add one.'):''}</div>`}</div>`;
 }
 function results(q){
   const hits=[];modules.forEach((c,mi)=>c.items.forEach((it,si)=>{if((it.name+' '+host(it.url)+' '+c.name).toLowerCase().includes(q))hits.push([it,c,mi,si])}));
@@ -700,7 +706,7 @@ function openMenu(x,y,title,items){
 const closeMenu=()=>{$('menu').hidden=true};
 $('menu').addEventListener('click',e=>{
   const b=e.target.closest('button[data-i]');if(!b)return;const a=menuActions[+b.dataset.i];
-  if(a.danger&&!b.classList.contains('armed')){b.classList.add('armed');b.lastChild.textContent=a.confirm||'Click again to delete';return}
+  if(a.danger&&!b.classList.contains('armed')){b.classList.add('armed');b.lastChild.textContent=a.confirm||(TOUCH?'Tap':'Click')+' again to delete';return}
   closeMenu();a.run();
 });
 document.addEventListener('pointerdown',e=>{if(!$('menu').hidden&&!e.target.closest('#menu'))closeMenu()},true);
@@ -730,7 +736,7 @@ function menuFor(target,x,y){
       {label:'Rename & change icon',icon:'edit',run:()=>openEditor('module',m)},
       {label:'Move earlier',icon:'up',disabled:m===0,run:()=>{modules=moveItem(modules,m,-1);commit()}},
       {label:'Move later',icon:'down',disabled:m===modules.length-1,run:()=>{modules=moveItem(modules,m,1);commit()}},
-      {label:'Delete module and its sites',icon:'del',danger:true,confirm:`Click again: delete ${c.items.length} sites too`,run:()=>{modules=modules.filter((_,i)=>i!==m);commit()}},
+      {label:'Delete module and its sites',icon:'del',danger:true,confirm:`${TOUCH?'Tap':'Click'} again: delete ${c.items.length} sites too`,run:()=>{modules=modules.filter((_,i)=>i!==m);commit()}},
       '-',{label:'New module',icon:'add',run:()=>openEditor('module',null)},...arrangeItem()]);return true;
   }
   if(mi>=0){openMenu(x,y,modules[mi].name,[{label:'Add a site',icon:'add',run:()=>openEditor('site',mi,null)},{label:'Rename & change icon',icon:'edit',run:()=>openEditor('module',mi)},...arrangeItem()]);return true}
@@ -1805,6 +1811,7 @@ route();paintRecent();
 function askName(){const n=prompt('Your first name for the greeting (leave empty for none):',firstName);if(n===null)return;firstName=n.trim().slice(0,30);store.set('ss-name',firstName);paintGreet()}
 function exportBackup(){
   const b={app:'spacestation',version:1,exportedAt:new Date().toISOString(),name:firstName,place:PLACE,modules,recent,ui:UI,fav:FAV};
+  if(window.SSApp?.saveFile){SSApp.saveFile('spacestation-backup.json',JSON.stringify(b));return}
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(b)],{type:'application/json'}));a.download='spacestation-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 }
 function importBackup(){
@@ -1850,4 +1857,5 @@ fetchWeather();setInterval(fetchWeather,20*6e4);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!weather||Date.now()-new Date(weather.updatedAt)>15*6e4))fetchWeather()});
 </script>
 
+<script>if('serviceWorker'in navigator&&location.protocol==='https:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))</script>
 </body></html>
