@@ -271,6 +271,8 @@ body{position:relative;background:radial-gradient(var(--dot-off) 1px,transparent
 #camp{-webkit-mask-image:linear-gradient(to right,transparent,#000 9%,#000 91%,transparent),linear-gradient(to bottom,transparent,#000 10%,#000 88%,transparent);
   -webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent,#000 9%,#000 91%,transparent),linear-gradient(to bottom,transparent,#000 10%,#000 88%,transparent);mask-composite:intersect}
 #rt{cursor:pointer;outline:none}
+html{-webkit-tap-highlight-color:transparent}
+.ask-note{margin:-6px 0 0;color:var(--muted);font-size:13px}
 #rt.busy{cursor:default}
 #rt:focus-visible{outline:2px solid var(--signal);outline-offset:4px;border-radius:8px}
 .rt-name{position:absolute;left:0;top:0;font-family:"Rye",Georgia,serif;font-size:9px;line-height:1;letter-spacing:.04em;color:var(--fg);white-space:nowrap;pointer-events:none;
@@ -426,6 +428,15 @@ html.theming *,html.theming *::before,html.theming *::after{transition:none!impo
   <button class="btn" id="ar-reset">Reset</button><button class="btn primary" id="ar-done">Done</button></div>
 <div class="menu" id="menu" hidden role="menu"></div>
 <div class="status" id="status" role="status" hidden></div>
+
+<div class="sheet" id="asksheet" hidden>
+  <form class="panel" id="askform" autocomplete="off">
+    <h3 id="ask-title"></h3>
+    <div class="field"><label for="ask-in" id="ask-label"></label><input id="ask-in" maxlength="40"></div>
+    <p class="ask-note" id="ask-note"></p>
+    <div class="actions"><button type="button" class="btn" id="ask-cancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</div>
 
 <div class="sheet" id="sheet" hidden>
   <form class="panel" id="form" autocomplete="off">
@@ -1808,7 +1819,20 @@ recentRef={set:async d=>{store.set('ss-recent',d.items)}};
 canWrite=true;firstName=store.get('ss-name','');paintGreet();
 modules=store.get('ss-modules',SHARED.modules);recent=(store.get('ss-recent',SHARED.recent)||[]).slice(0,5); // first visit: the shared setup
 route();paintRecent();
-function askName(){const n=prompt('Your first name for the greeting (leave empty for none):',firstName);if(n===null)return;firstName=n.trim().slice(0,30);store.set('ss-name',firstName);paintGreet()}
+// the browser's own prompt() is an unstyled system box (and names the site's address in the app): ask in our own sheet
+function askText(title,label,value,note,placeholder=''){
+  const s=$('asksheet'),f=$('askform'),i=$('ask-in');
+  $('ask-title').textContent=title;$('ask-label').textContent=label;$('ask-note').textContent=note;i.value=value||'';i.placeholder=placeholder;
+  s.hidden=false;setTimeout(()=>{i.focus();i.select()},30);
+  return new Promise(done=>{
+    const end=v=>{s.hidden=true;f.onsubmit=s.onclick=$('ask-cancel').onclick=s.onkeydown=null;done(v)};
+    f.onsubmit=e=>{e.preventDefault();end(i.value)};
+    $('ask-cancel').onclick=()=>end(null);
+    s.onclick=e=>{if(e.target===s)end(null)};
+    s.onkeydown=e=>{if(e.key==='Escape')end(null)};
+  });
+}
+async function askName(){const n=await askText('YOUR NAME','First name',firstName,'Shown in the greeting. Leave empty for none.','Your name');if(n===null)return;firstName=n.trim().slice(0,30);store.set('ss-name',firstName);paintGreet()}
 function exportBackup(){
   const b={app:'spacestation',version:1,exportedAt:new Date().toISOString(),name:firstName,place:PLACE,modules,recent,ui:UI,fav:FAV};
   if(window.SSApp?.saveFile){SSApp.saveFile('spacestation-backup.json',JSON.stringify(b));return}
@@ -1827,15 +1851,16 @@ $view.addEventListener('click',e=>{if(e.target.closest('[data-import]'))importBa
 /* ======================= live weather (Open-Meteo, no key needed) ======================= */
 const HOME={city:'Baghdad',lat:33.3152,lon:44.3661};
 let PLACE=store.get('ss-place',null)||HOME;
+const tellApp=()=>{try{window.SSApp?.setPlace?.(PLACE.city,PLACE.lat,PLACE.lon)}catch{}};tellApp();
 async function askCity(){
-  const n=prompt('City for the weather (leave empty for Baghdad):',PLACE.city);if(n===null)return;
+  const n=await askText('WEATHER CITY','City',PLACE.city,'Leave empty for Baghdad.','City');if(n===null)return;
   let p=HOME;
   if(n.trim()){
     try{const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?'+new URLSearchParams({name:n.trim(),count:1}));const g=(await r.json()).results?.[0];
       if(!g){toast(`Couldn't find "${n.trim()}"`,true);return}p={city:g.name,lat:g.latitude,lon:g.longitude}}
     catch{toast("Couldn't look up that city",true);return}
   }
-  PLACE=p;store.set('ss-place',p);store.set('ss-wx',null);weather=forecast=null;toast('Weather: '+p.city);fetchWeather();
+  PLACE=p;store.set('ss-place',p);store.set('ss-wx',null);tellApp();weather=forecast=null;toast('Weather: '+p.city);fetchWeather();
 }
 const wmo=c=>c<=1?'clear':c===2?'partly':c===3?'cloudy':c<=48?'fog':c<=67||(c>=80&&c<=82)?'rain':c<=77||c===85||c===86?'snow':c>=95?'storm':'cloudy';
 const hhmm=s=>s?s.slice(11,16):'';
