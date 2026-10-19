@@ -1428,7 +1428,7 @@ function saloonBoot() {
   }
 
   // ---------- the game: spin, BANG, last one standing ----------
-  const WIN_LOCK = 36; // ticks (3 s) of victory lap; then the next game starts
+  const WIN_LOCK = 48; // ticks (4 s) of victory lap; then the next game starts
   let lastSpin = -1e9; const SPIN_GAP = 1000; // ms: one shot per second at most
   const announce = t => { if (live) live.textContent = t; };
   function spin() {
