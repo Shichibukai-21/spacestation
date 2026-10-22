@@ -2058,7 +2058,8 @@ if(APP){
   const ringAt=(x,y)=>{const r=document.createElement('div');r.className='hold-ring';r.style.left=x+'px';r.style.top=y+'px';
     r.innerHTML='<svg viewBox="0 0 64 64"><circle class="tr" cx="32" cy="32" r="28"/><circle class="fl" cx="32" cy="32" r="28"/></svg>';document.body.appendChild(r);return r};
   function endHold(){if(!H)return;clearTimeout(H.timer);const r=H.ring;if(r){if(H.armed){r.classList.add('done');setTimeout(()=>r.remove(),260)}else r.remove()}H.el.classList.remove('lifted');H=null}
-  function arm(){if(!H)return;H.armed=true;H.el.classList.add('lifted');H.ring.classList.add('done');eatClick=true;clearTimeout(eatTimer)}
+  const buzz=()=>{try{window.SSApp?.haptic?.()}catch{}};
+  function arm(){if(!H)return;H.armed=true;buzz();H.el.classList.add('lifted');H.ring.classList.add('done');eatClick=true;clearTimeout(eatTimer)}
   document.addEventListener('pointerdown',e=>{
     if(e.pointerType==='mouse'||H)return;
     const el=e.target.closest('#view .site,#view .module');if(!el||!canWrite)return;
@@ -2107,7 +2108,7 @@ if(APP){
     if(c||performance.now()-D.lastFlip<180)return;
     for(const t of D.box.children){if(t===el)continue;const r=t.getBoundingClientRect();
       if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom){const kids=[...D.box.children],i=kids.indexOf(el),j=kids.indexOf(t);
-        flip(D.box,el,()=>D.box.insertBefore(el,i<j?t.nextSibling:t));D.lastFlip=performance.now();break}}
+        flip(D.box,el,()=>D.box.insertBefore(el,i<j?t.nextSibling:t));D.lastFlip=performance.now();buzz();break}}
   }
   function flip(box,skip,mutate){
     const kids=[...box.children].filter(k=>k!==skip),before=new Map(kids.map(k=>[k,k.getBoundingClientRect()]));mutate();
