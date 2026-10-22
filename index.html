@@ -1,5 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>SpaceStation</title>
+<script>if(/SpaceStationApp\//.test(navigator.userAgent)){document.documentElement.classList.add("app");document.documentElement.dataset.tab="home"}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -342,6 +343,117 @@ html.theming *,html.theming *::before,html.theming *::after{transition:none!impo
 .enter > *:nth-child(2){animation-delay:.03s}.enter > *:nth-child(3){animation-delay:.06s}.enter > *:nth-child(4){animation-delay:.09s}
 .enter > *:nth-child(5){animation-delay:.12s}.enter > *:nth-child(6){animation-delay:.15s}.enter > *:nth-child(n+7){animation-delay:.18s}
 @keyframes rise-in{from{transform:translateY(8px);opacity:.001}to{transform:none;opacity:1}}
+
+/* ======================= Android app layout (html.app; the website is untouched) =======================
+   One screen per tab, nothing scrolls the page: a header, the tab's content, a bottom tab bar.
+   Only lists that can outgrow the screen (your sites) scroll, inside their own panel. */
+.app,.app body{height:100%;overflow:hidden;overscroll-behavior:none}
+.app body{min-height:0;padding:0;-webkit-tap-highlight-color:transparent}
+.app{--tabh:66px}
+.app .board{display:grid;height:100%;gap:12px;padding:10px 16px calc(var(--tabh) + 12px);
+  grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto;
+  grid-template-areas:"brand theme" "a a" "b b"}
+.app .blk{display:none;padding:0;min-width:0;min-height:0;order:0;position:relative;top:auto;right:auto;container-type:inline-size}
+.app .b-brand{display:flex;grid-area:brand;align-items:center;padding:0}
+.app .b-theme{display:flex;grid-area:theme;align-items:center;gap:8px}
+.app .b-theme .more,.app .themer{width:44px}
+.app .b-theme .more{margin:0}
+.app .brand{flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;text-align:left}
+.app .b-brand{min-width:0;justify-content:flex-start}.app .brand{min-width:0;max-width:100%}
+.app .brand .hello{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.app .brand .name{font-size:20px;gap:9px;letter-spacing:.12em}
+.app .brand .name::before{width:8px;height:8px}
+/* home: clock + weather, recently opened */
+.app[data-tab=home] .b-clock{display:flex;grid-area:a}
+.app[data-tab=home] .b-recent{display:flex;flex-direction:column;gap:8px;grid-area:b;overflow:visible}
+.app .clockcard{flex:1;width:100%;height:100%;gap:10px;padding:14px 14px 12px}
+.app .dialwrap{flex:1 1 0;height:auto;min-height:0}
+.app .dial{height:100%;max-height:100%;width:auto}
+.app .ck-wx{min-height:26px}
+.app .ck-days{display:grid!important;min-height:66px}
+.app .ck-foot{display:block!important;min-height:14px}
+.app .ck-day .wx-icon{width:24px;height:24px}
+.app .b-recent .label{text-align:left}
+.app .recents{flex-direction:row;overflow-x:auto;scrollbar-width:none;gap:8px;margin:0 -16px;padding:0 16px 2px;scroll-padding:0 16px}
+.app .recents::-webkit-scrollbar{display:none}
+.app .rec{flex:none;max-width:170px;padding:6px 12px 6px 6px}
+.app .rec .r-time{display:none}
+.app .rec-empty{flex:1;padding:12px}
+/* sites: search pinned on top, modules scroll underneath it */
+.app[data-tab=sites] .b-search{display:block;grid-area:a}
+.app[data-tab=sites] .b-view{display:block;grid-area:b;overflow:auto;overscroll-behavior:contain;scrollbar-width:none;margin:0 -16px;padding:2px 16px 16px}
+.app[data-tab=sites] .board{grid-template-rows:auto auto minmax(0,1fr)}
+.app .b-view::-webkit-scrollbar{display:none}
+.app .search kbd{display:none}
+.app .search input{padding-block:13px}
+.app .modules{gap:12px}
+.app .module{padding:18px 12px 16px;gap:10px}
+.app .module .glyph{width:44px;height:44px;gap:2.5px}
+.app .room-head{padding-top:0;flex-wrap:nowrap;justify-content:flex-start;gap:10px;min-height:44px;margin-bottom:-4px}
+.app .room-head .back{position:static;transform:none;padding:10px 12px 10px 0;margin-right:2px}
+.app .room-head h2{font-size:22px}
+.app .room-head .cnt{margin-left:auto}
+.app .sites{gap:10px}
+.app .site{padding:16px 10px 12px}
+.app .hint{margin-top:16px}
+/* saloon and site of grace: full screen each */
+.app[data-tab=saloon] .b-table,.app[data-tab=grace] .b-camp{display:flex;grid-area:a/a/b/b;height:auto}
+.app[data-tab=saloon] .board,.app[data-tab=grace] .board{grid-template-rows:auto minmax(0,1fr) 0}
+.app .b-camp .cap{padding-bottom:2px}
+/* tiles: no text selection or system callout when held */
+.app .site,.app .module,.app .rec{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.app .site:hover,.app .module:hover{transform:none}
+.app .site:active,.app .module:active,.app .rec:active{transform:scale(.97);transition:transform .12s}
+/* bottom tab bar */
+.tabbar{display:none}
+.app .tabbar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;z-index:20;left:0;right:0;bottom:0;
+  height:calc(var(--tabh) + env(safe-area-inset-bottom,0px));padding:6px 10px env(safe-area-inset-bottom,0px);
+  background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.tabbar button{all:unset;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border-radius:16px;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);-webkit-tap-highlight-color:transparent}
+.tabbar .glyph{width:24px;height:24px;gap:1px;transition:transform .15s}
+.tabbar .glyph i{background:transparent}
+.tabbar .glyph i.on{background:var(--muted);box-shadow:none}
+.tabbar button[aria-selected=true]{color:var(--fg)}
+.tabbar button[aria-selected=true] .glyph i.on{background:var(--signal);box-shadow:0 0 6px color-mix(in srgb,var(--signal) 60%,transparent)}
+.tabbar button:active .glyph{transform:scale(.9)}
+.app.kb .tabbar{display:none}
+.app.kb .board{padding-bottom:12px}
+.app .status{bottom:calc(var(--tabh) + 12px + env(safe-area-inset-bottom,0px))}
+/* menus become bottom sheets */
+.app .menu{left:0!important;right:0;top:auto!important;bottom:0;min-width:0;border-radius:24px 24px 0 0;border-bottom:0;
+  padding:8px 10px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 0 0 100vmax var(--scrim);animation:sheet-up .22s cubic-bezier(.2,.9,.3,1)}
+.app .menu::before{content:"";align-self:center;width:38px;height:4px;border-radius:2px;background:var(--line);margin:2px 0 6px}
+.app .menu .mh{padding:6px 12px 8px;font-size:11px}
+.app .menu button{padding:14px 12px;font-size:15px;gap:14px;border-radius:14px}
+.app .menu button:hover{background:none}
+.app .menu button:active{background:var(--signal-soft)}
+.app .menu svg{width:17px;height:17px}
+.app .sheet{place-items:end stretch}
+.app .sheet .panel{width:100%;max-width:none;border-radius:24px 24px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));animation:sheet-up .24s cubic-bezier(.2,.9,.3,1);max-height:92%;overflow:auto}
+@keyframes sheet-up{from{transform:translateY(100%)}}
+/* hold: a ring fills under the finger; the tile lifts when it's done */
+.hold-ring{position:fixed;z-index:60;width:64px;height:64px;margin:-32px 0 0 -32px;pointer-events:none;opacity:0;animation:ring-in .15s .15s forwards}
+.hold-ring circle{fill:none;stroke-width:3.2;stroke-linecap:round}
+.hold-ring .tr{stroke:color-mix(in srgb,var(--fg) 14%,transparent)}
+.hold-ring .fl{stroke:var(--signal);stroke-dasharray:176;stroke-dashoffset:176;transform:rotate(-90deg);transform-origin:center;animation:ring-fill .85s .15s linear forwards}
+.hold-ring.done{animation:ring-out .25s forwards}
+@keyframes ring-in{to{opacity:1}}
+@keyframes ring-fill{to{stroke-dashoffset:0}}
+@keyframes ring-out{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.35)}}
+.app .lifted{transform:scale(1.04)!important;border-color:var(--signal)!important;box-shadow:0 14px 30px -14px rgba(0,0,0,.5);transition:transform .15s}
+/* drag */
+.drag-ghost{position:fixed!important;z-index:55;margin:0;pointer-events:none;transform-origin:center;border-color:var(--signal)!important;
+  box-shadow:0 24px 44px -16px rgba(0,0,0,.55)!important;opacity:.96;transition:none!important}
+.app .drag-ph{opacity:.28;border-style:dashed!important;transform:none!important;box-shadow:none!important}
+.menu-scrim{position:fixed;inset:0;z-index:39}
+.movebar{position:fixed;z-index:54;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));
+  background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -14px 30px -18px rgba(0,0,0,.45);animation:sheet-up .2s}
+.movebar .mh{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:8px}
+.movebar .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.movebar .chip{flex:none;display:flex;align-items:center;gap:8px;padding:8px 12px 8px 8px;border-radius:14px;border:1px solid var(--line);background:var(--bg);font-size:13px;color:var(--fg)}
+.movebar .chip .glyph{width:20px;height:20px;gap:1px}
+.movebar .chip.over{border-color:var(--signal);background:var(--signal-soft);transform:scale(1.05)}
 @media (prefers-reduced-motion: reduce){*,::view-transition-new(root){animation:none!important;transition:none!important}}
 </style>
 
@@ -426,6 +538,8 @@ html.theming *,html.theming *::before,html.theming *::after{transition:none!impo
 
 <div class="arrangebar" id="arrangebar" hidden>Drag blocks · corner to resize
   <button class="btn" id="ar-reset">Reset</button><button class="btn primary" id="ar-done">Done</button></div>
+<nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
+<div class="movebar" id="movebar" hidden><div class="mh">Drop on a module to move it there</div><div class="chips" id="movechips"></div></div>
 <div class="menu" id="menu" hidden role="menu"></div>
 <div class="status" id="status" role="status" hidden></div>
 
@@ -485,6 +599,7 @@ const fav=it=>{
 const newId=()=>'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const ago=t=>{const s=(Date.now()-new Date(t))/1000;if(!(s>=0))return'';if(s<60)return'now';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'};
 const desktop=()=>matchMedia('(min-width:900px)').matches;
+const APP=document.documentElement.classList.contains('app'); // inside the Android app: its own app layout (tabs, hold & drag)
 
 let modules=null,recent=[],siteStatus=null,weather=null,forecast=null;
 let db=null,canWrite=false,loadFailed=false,layoutRef=null,recentRef=null,uiRef=null;
@@ -565,7 +680,7 @@ for(let i=0;i<60;i++){const a=i*Math.PI/30,q=i%5===0,r1=q?39.5:42.6,r2=44.2;tick
 const ARC=2*Math.PI*48.6;$('secarc').style.strokeDasharray=ARC;
 let firstName='';
 const greeting=h=>h<5?'Late night':h<12?'Good morning':h<17?'Good afternoon':h<22?'Good evening':'Late night';
-function paintGreet(){const g=greeting(new Date().getHours());$('greet').innerHTML=`${g}${firstName?`, <b>${esc(firstName)}</b>`:''} — welcome aboard`}
+function paintGreet(){const g=greeting(new Date().getHours());$('greet').innerHTML=`${g}${firstName?`, <b>${esc(firstName)}</b>`:''}${APP?'':' — welcome aboard'}`}
 function tick(){
   const d=new Date(),h=d.getHours(),m=d.getMinutes(),s=d.getSeconds();
   $('hh').setAttribute('transform',`rotate(${(h%12)*30+m*.5} 50 50)`);$('mh').setAttribute('transform',`rotate(${m*6+s*.1} 50 50)`);$('sh').setAttribute('transform',`rotate(${s*6} 50 50)`);
@@ -623,9 +738,9 @@ function paintWeather(){
   const dk=cur?cur.code+(cur.isDay!==false):'';if(dk!==lastDial){$('dialwx').innerHTML=cur?dialWx(cur.code,cur.isDay!==false):'';lastDial=dk}
   const t0=days[0]&&days[0].date===today?days[0]:null;
   const meta=[t0?`H ${Math.round(t0.hi)}° · L ${Math.round(t0.lo)}°`:'',cur&&cur.humidity!=null?`${Math.round(cur.humidity)}% humidity`:''].filter(Boolean).join(' · ');
-  $('ckwx').innerHTML=cur?`<span class="ck-temp">${Math.round(cur.temp)}°</span><span class="ck-cond">${esc(WXNAME[cur.code]||'Weather')}</span>${meta?`<span class="ck-meta">${meta}</span>`:''}`:'';
+  $('ckwx').innerHTML=cur?`<span class="ck-temp">${Math.round(cur.temp)}°</span><span class="ck-cond">${esc(WXNAME[cur.code]||'Weather')}</span>${meta?`<span class="ck-meta">${meta}</span>`:''}`:APP?'<span class="ck-temp">--°</span><span class="ck-cond">Weather</span><span class="ck-meta">Loading</span>':'';
   const ic=c=>`<svg class="wx-icon" viewBox="0 0 46 46" aria-hidden="true">${wxIcon(c,true)}</svg>`;
-  $('ckdays').innerHTML=days.map(d=>`<div class="ck-day${d.date===today?' today':''}"><span class="dn">${d.date===today?'Today':esc(new Date(d.date+'T12:00').toLocaleDateString(undefined,{weekday:'short'}))}</span>${ic(d.code)}<b>${Math.round(d.hi)}°</b><span>${Math.round(d.lo)}°</span></div>`).join('');
+  $('ckdays').innerHTML=!days.length&&APP?[0,1,2,3,4].map(i=>`<div class="ck-day${i?'':' today'}"><span class="dn">${i?'···':'Today'}</span><svg class="wx-icon" viewBox="0 0 46 46" aria-hidden="true"></svg><b>--°</b><span>--°</span></div>`).join(''):days.map(d=>`<div class="ck-day${d.date===today?' today':''}"><span class="dn">${d.date===today?'Today':esc(new Date(d.date+'T12:00').toLocaleDateString(undefined,{weekday:'short'}))}</span>${ic(d.code)}<b>${Math.round(d.hi)}°</b><span>${Math.round(d.lo)}°</span></div>`).join('');
   const city=(cur&&cur.city)||(f&&f.city)||'';
   $('ckfoot').textContent=[city,t0&&t0.sunrise?`Sunrise ${t0.sunrise}`:'',t0&&t0.sunset?`Sunset ${t0.sunset}`:''].filter(Boolean).join(' · ');
 }
@@ -646,13 +761,13 @@ function home(){
   if(!modules.length){$view.innerHTML=`<div class="empty">${glyph('star')}<div>No modules yet. Import your backup file, or ${matchMedia('(hover:none) and (pointer:coarse)').matches?'tap ⋯':'right-click here'} to add one.</div><button class="btn primary" data-import>Import backup</button></div>`;return}
   $view.innerHTML=`<div class="modules enter">${modules.map((c,i)=>`
     <button class="module" data-go="${esc(c.id)}" data-m="${i}" aria-label="Open ${esc(c.name)}"><span class="m-count">${pad(c.items.length)}</span>${glyph(c.glyph)}
-      <span class="m-name">${esc(c.name)}</span><span class="m-desc">${esc(c.desc)}</span></button>`).join('')}</div>${canWrite?`<p class="hint">${TOUCH?'Long-press to edit':'Right-click to edit · arrange layout'}</p>`:''}`;
+      <span class="m-name">${esc(c.name)}</span><span class="m-desc">${esc(c.desc)}</span></button>`).join('')}</div>${canWrite?`<p class="hint">${APP?'Hold to edit · hold and drag to reorder':TOUCH?'Long-press to edit':'Right-click to edit · arrange layout'}</p>`:''}`;
 }
 function room(c,mi){
   $view.innerHTML=`<div class="room"><div class="room-head">
       <button class="back" data-go=""><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>Station</button>
       ${glyph(c.glyph,'sm')}<h2>${esc(c.name.toUpperCase())}</h2><span class="cnt">${pad(c.items.length)}</span></div>
-    ${c.items.length?`<div class="sites enter">${c.items.map((it,si)=>siteCard(it,c,false,mi,si)).join('')}</div>`:`<div class="empty">No sites here yet.${canWrite?(TOUCH?' Long-press to add one.':' Right-click to add one.'):''}</div>`}</div>`;
+    ${c.items.length?`<div class="sites enter">${c.items.map((it,si)=>siteCard(it,c,false,mi,si)).join('')}</div>`:`<div class="empty">No sites here yet.${canWrite?(APP?' Tap ⋯ to add one.':TOUCH?' Long-press to add one.':' Right-click to add one.'):''}</div>`}</div>`;
 }
 function results(q){
   const hits=[];modules.forEach((c,mi)=>c.items.forEach((it,si)=>{if((it.name+' '+host(it.url)+' '+c.name).toLowerCase().includes(q))hits.push([it,c,mi,si])}));
@@ -666,7 +781,7 @@ function route(){
   const q=$q.value.trim().toLowerCase();if(q)return results(q);
   const mi=curRoom();mi>=0?room(modules[mi],mi):home();
 }
-const go=id=>{if(id)location.hash=id;else history.pushState(null,'',location.pathname+location.search);route()};
+const go=id=>{if(APP)return appGo(id);if(id)location.hash=id;else history.pushState(null,'',location.pathname+location.search);route()};
 
 /* ======================= recent ======================= */
 function findItem(url){if(!modules)return null;for(const m of modules)for(const it of m.items)if(it.url===url)return it;return null}
@@ -707,6 +822,7 @@ const IC={
 };
 let menuActions=[];
 function openMenu(x,y,title,items){
+  if(APP)items=items.filter(it=>it==='-'||!/^Move (earlier|later)$/.test(it.label));
   const m=$('menu');menuActions=[];
   m.innerHTML=`<div class="mh">${esc(title)}</div>`+items.map(it=>{if(it==='-')return'<hr>';menuActions.push(it);const i=menuActions.length-1;
     return`<button role="menuitem" data-i="${i}" class="${it.danger?'danger':''}" ${it.disabled?'disabled':''}>${IC[it.icon]||''}<span>${esc(it.label)}</span></button>`}).join('');
@@ -755,17 +871,18 @@ function menuFor(target,x,y){
 }
 document.addEventListener('contextmenu',e=>{
   if(e.target.closest('input,select,textarea,.menu,.sheet'))return;
+  if(APP){e.preventDefault();return}
   if(!e.target.closest('.board'))return;
   if(menuFor(e.target,e.clientX,e.clientY))e.preventDefault();
 });
 $('more').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();menuFor($view,r.right,r.bottom+8)||openMenu(r.right,r.bottom+8,'Station',arrangeItem().slice(1))});
 let lpTimer=null,lpFired=false,lpStart=null;
 document.addEventListener('pointerdown',e=>{
-  if(e.pointerType!=='touch'||!e.target.closest('.b-view'))return;
+  if(APP||e.pointerType!=='touch'||!e.target.closest('.b-view'))return;
   lpFired=false;lpStart=[e.clientX,e.clientY];const t=e.target;lpTimer=setTimeout(()=>{lpFired=menuFor(t,lpStart[0],lpStart[1])},550);
 });
 document.addEventListener('pointermove',e=>{if(lpTimer&&lpStart&&Math.hypot(e.clientX-lpStart[0],e.clientY-lpStart[1])>10){clearTimeout(lpTimer);lpTimer=null}});
-document.addEventListener('pointerup',()=>{clearTimeout(lpTimer);lpTimer=null});
+document.addEventListener('pointerup',()=>{clearTimeout(lpTimer);lpTimer=null});document.addEventListener('pointercancel',()=>{clearTimeout(lpTimer);lpTimer=null});
 document.addEventListener('click',e=>{if(lpFired){e.preventDefault();e.stopPropagation();lpFired=false}},true);
 
 /* ======================= editor ======================= */
@@ -1878,8 +1995,141 @@ async function fetchWeather(){
   }catch{const c=store.get('ss-wx',null);if(c&&!weather){weather=c.weather;forecast=c.forecast}}
   lastDial='';paintWeather();
 }
+{const c=store.get('ss-wx',null);if(c&&c.weather&&!weather){weather=c.weather;forecast=c.forecast;lastDial='';paintWeather()}}
 fetchWeather();setInterval(fetchWeather,20*6e4);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!weather||Date.now()-new Date(weather.updatedAt)>15*6e4))fetchWeather()});
+
+/* ======================= Android app: tabs, back button, hold & drag (only inside the app) ======================= */
+function appGo(id){ // rooms are history entries, so the phone's back button leaves them
+  if(id){const s=history.state||{};history.pushState({tab:'sites',d:(s.d||0)+1},'',location.pathname+location.search+'#'+id);route();const v=$view.closest('.b-view');if(v)v.scrollTop=0}
+  else if(curRoom()>=0)history.back();else route();
+}
+if(APP){
+  const R=document.documentElement,TABS=[['home','Home'],['sites','Sites'],['saloon','Saloon'],['grace','Grace']];
+  const TAB_ICONS={
+    home:["..#####..",".#.....#.","#...#...#","#...#...#","#...###.#","#.......#","#.......#",".#.....#.","..#####.."],
+    sites:["####.####","#..#.#..#","#..#.#..#","####.####",".........","####.####","#..#.#..#","#..#.#..#","####.####"],
+    saloon:[".........",".........","...###...","..#####..","..#####..","#########",".#######.",".........","........."],
+    grace:["....#....","...##....","...###...","..####.#.","..#####..",".#######.",".###.###.","..#...#..","...###..."]};
+  const dots=rows=>`<span class="glyph" aria-hidden="true">${rows.join('').split('').map(c=>c==='#'?'<i class="on"></i>':'<i></i>').join('')}</span>`;
+  const bar=$('tabbar');
+  bar.innerHTML=TABS.map(([k,n])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="false">${dots(TAB_ICONS[k])}<span>${n}</span></button>`).join('');
+  const st=()=>history.state||{};
+  let tab='home';
+  function showTab(t){tab=t;R.dataset.tab=t;bar.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)))}
+  function sync(){const s=st();showTab(TABS.some(([k])=>k===s.tab)?s.tab:'home');route()}
+  history.replaceState({tab:'home',d:0},'',location.pathname+location.search); // the app always opens on Home
+  sync();
+  bar.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-tab]');if(!b)return;const t=b.dataset.tab,s=st(),d=s.d||0;
+    if(t===tab){if(t==='sites'){if(curRoom()>=0)history.back();else $view.closest('.b-view').scrollTo({top:0,behavior:'smooth'})}return}
+    if(t==='home'){if(d>0)history.go(-d);else sync();return}
+    if(tab==='home')history.pushState({tab:t,d:d+1},'',location.pathname+location.search);
+    else history.replaceState({...s,tab:t},'',location.href);
+    if(document.activeElement===$q)$q.blur();
+    sync();
+  });
+
+  /* menus and sheets are history entries too: back closes them first */
+  const overlays=['menu','sheet','asksheet'].map($).filter(Boolean);
+  let layer=false;
+  const anyOpen=()=>overlays.some(o=>!o.hidden);
+  const scrim=document.createElement('div');scrim.className='menu-scrim';scrim.hidden=true;document.body.appendChild(scrim);
+  const mo=new MutationObserver(()=>{
+    const o=anyOpen();scrim.hidden=$('menu').hidden;
+    if(o&&!layer){layer=true;const s=st();history.pushState({...s,d:(s.d||0)+1,layer:1},'',location.href)}
+    else if(!o&&layer){layer=false;if(st().layer)history.back()}
+  });
+  overlays.forEach(o=>mo.observe(o,{attributes:true,attributeFilter:['hidden']}));
+  function closeOverlays(){if(!$('menu').hidden)$('menu').hidden=true;if(!$('sheet').hidden)closeEditor();if($('asksheet')&&!$('asksheet').hidden)$('ask-cancel').click()}
+  addEventListener('popstate',()=>{
+    if(layer&&!st().layer){layer=false;closeOverlays()}
+    else if(!layer&&st().layer){history.back();return} // a sheet that already closed itself: skip its entry
+    sync();
+  });
+
+  /* keyboard open: hide the tab bar so the search field and results get the room */
+  let tallest=innerHeight;
+  addEventListener('resize',()=>{tallest=Math.max(tallest,innerHeight);R.classList.toggle('kb',innerHeight<tallest*.78)});
+
+  /* ---- hold (1 s) for the menu; hold, then drag to reorder ---- */
+  const HOLD=1000,SLOP=9;
+  let H=null,eatClick=false,eatTimer=null;
+  const ringAt=(x,y)=>{const r=document.createElement('div');r.className='hold-ring';r.style.left=x+'px';r.style.top=y+'px';
+    r.innerHTML='<svg viewBox="0 0 64 64"><circle class="tr" cx="32" cy="32" r="28"/><circle class="fl" cx="32" cy="32" r="28"/></svg>';document.body.appendChild(r);return r};
+  function endHold(){if(!H)return;clearTimeout(H.timer);const r=H.ring;if(r){if(H.armed){r.classList.add('done');setTimeout(()=>r.remove(),260)}else r.remove()}H.el.classList.remove('lifted');H=null}
+  function arm(){if(!H)return;H.armed=true;H.el.classList.add('lifted');H.ring.classList.add('done');eatClick=true;clearTimeout(eatTimer)}
+  document.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'||H)return;
+    const el=e.target.closest('#view .site,#view .module');if(!el||!canWrite)return;
+    H={el,x:e.clientX,y:e.clientY,id:e.pointerId,armed:false,drag:null,ring:ringAt(e.clientX,e.clientY)};
+    H.timer=setTimeout(arm,HOLD);
+  },true);
+  document.addEventListener('pointermove',e=>{
+    if(!H||e.pointerId!==H.id)return;const far=Math.hypot(e.clientX-H.x,e.clientY-H.y)>SLOP;
+    if(!H.armed){if(far)endHold();return}
+    if(!H.drag&&far)startDrag();
+    if(H&&H.drag)moveDrag(e.clientX,e.clientY);
+  },true);
+  document.addEventListener('pointerup',e=>{
+    if(!H||e.pointerId!==H.id)return;
+    if(!H.armed){endHold();return}
+    if(H.drag){dropDrag(e.clientX,e.clientY);return}
+    const el=H.el,x=H.x,y=H.y;endHold();menuFor(el,x,y);
+    eatTimer=setTimeout(()=>eatClick=false,450);
+  },true);
+  document.addEventListener('pointercancel',e=>{if(!H||e.pointerId!==H.id)return;if(H.drag)dropDrag(null,null,true);else endHold()},true);
+  addEventListener('scroll',()=>{if(H&&!H.armed)endHold()},{capture:true,passive:true});
+  // once armed, the finger moves the tile, not the page
+  document.addEventListener('touchmove',e=>{if(H&&H.armed&&e.cancelable)e.preventDefault()},{passive:false,capture:true});
+  document.addEventListener('click',e=>{if(eatClick){e.preventDefault();e.stopPropagation();eatClick=false}},true);
+
+  function startDrag(){
+    const el=H.el,r=el.getBoundingClientRect(),g=el.cloneNode(true),kind=el.classList.contains('module')?'module':'site';
+    g.classList.remove('lifted');g.classList.add('drag-ghost');Object.assign(g.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});
+    document.body.appendChild(g);el.classList.remove('lifted');el.classList.add('drag-ph');H.ring?.remove();H.ring=null;
+    const D=H.drag={g,r,kind,box:el.parentElement,scroller:$view.closest('.b-view'),start:[...el.parentElement.children].map(n=>n.dataset[kind==='module'?'m':'s']),
+      mi:+el.dataset.m,x:H.x,y:H.y,lastFlip:0,chip:null,raf:0};
+    if(kind==='site'&&curRoom()>=0&&!$q.value.trim()){
+      $('movechips').innerHTML=modules.map((m,i)=>i===D.mi?'':`<div class="chip" data-to="${i}">${glyph(m.glyph,'sm')}<span>${esc(m.name)}</span></div>`).join('');
+      $('movebar').hidden=false;
+    }
+    const tick=()=>{if(!H||H.drag!==D)return;const v=D.scroller.getBoundingClientRect();
+      const sp=D.y<v.top+70?-Math.ceil((v.top+70-D.y)/6):D.y>v.bottom-70&&$('movebar').hidden?Math.ceil((D.y-(v.bottom-70))/6):0;
+      if(sp){D.scroller.scrollTop+=sp;hit(D.x,D.y)}D.raf=requestAnimationFrame(tick)};
+    D.raf=requestAnimationFrame(tick);
+  }
+  function moveDrag(x,y){const D=H.drag;D.x=x;D.y=y;D.g.style.transform=`translate(${x-H.x}px,${y-H.y}px) scale(1.05)`;hit(x,y)}
+  function chipAt(x,y){if($('movebar').hidden)return null;for(const c of $('movechips').children){const r=c.getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top-14&&y<=r.bottom+14)return c}return null}
+  function hit(x,y){
+    const D=H.drag,el=H.el,c=chipAt(x,y);
+    if(c!==D.chip){D.chip?.classList.remove('over');c?.classList.add('over');D.chip=c}
+    if(c||performance.now()-D.lastFlip<180)return;
+    for(const t of D.box.children){if(t===el)continue;const r=t.getBoundingClientRect();
+      if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom){const kids=[...D.box.children],i=kids.indexOf(el),j=kids.indexOf(t);
+        flip(D.box,el,()=>D.box.insertBefore(el,i<j?t.nextSibling:t));D.lastFlip=performance.now();break}}
+  }
+  function flip(box,skip,mutate){
+    const kids=[...box.children].filter(k=>k!==skip),before=new Map(kids.map(k=>[k,k.getBoundingClientRect()]));mutate();
+    kids.forEach(k=>{const a=before.get(k),b=k.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top;if(!dx&&!dy)return;
+      k.style.transition='none';k.style.transform=`translate(${dx}px,${dy}px)`;k.getBoundingClientRect();k.style.transition='transform .2s ease';k.style.transform='';
+      setTimeout(()=>{k.style.transition='';},230)});
+  }
+  function dropDrag(x,y,cancelled){
+    const D=H.drag,el=H.el;cancelAnimationFrame(D.raf);const chip=cancelled?null:D.chip;
+    D.g.remove();el.classList.remove('drag-ph');$('movebar').hidden=true;endHold();
+    eatTimer=setTimeout(()=>eatClick=false,450);
+    if(cancelled){route();return}
+    if(chip){const to=+chip.dataset.to,si=+el.dataset.s,it=modules[D.mi].items[si];
+      modules=modules.map((m,i)=>i===D.mi?{...m,items:m.items.filter((_,j)=>j!==si)}:i===to?{...m,items:[...m.items,it]}:m);
+      commit();setTimeout(()=>toast('Moved to '+modules[to].name),0);return}
+    const key=D.kind==='module'?'m':'s',order=[...D.box.children].map(n=>n.dataset[key]);
+    if(order.join()===D.start.join()){route();return}
+    if(D.kind==='module')modules=order.map(i=>modules[+i]);
+    else modules=modules.map((m,i)=>i===D.mi?{...m,items:order.map(j=>m.items[+j])}:m);
+    commit();
+  }
+}
 </script>
 
 <script>if('serviceWorker'in navigator&&location.protocol==='https:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))</script>
